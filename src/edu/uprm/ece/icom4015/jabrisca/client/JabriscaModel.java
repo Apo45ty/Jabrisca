@@ -4,14 +4,19 @@ import java.awt.Point;
 import java.util.concurrent.BlockingQueue;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
 
 import edu.uprm.ece.icom4015.jabrisca.client.views.AnimatedJabriscaJPanel;
 import edu.uprm.ece.icom4015.jabrisca.client.views.JabriscaJPanel;
+import edu.uprm.ece.icom4015.jabrisca.server.ChatSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.GameSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.ManagerSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.VanillaSocketThread;
 
 public class JabriscaModel implements Runnable {
+	private static final String GAME_SOCKET = "GameSocket";
+	private static final String MANAGER_SOCKET = "ManagerSocket";
+	private static final String CHAT_SOCKET = "ChatSocket";
 	private static final int ATTEMPTS_TO_CONNECT = 3;
 	private JabriscaJPanel lobby;
 	private JabriscaJPanel loginsingup;
@@ -108,7 +113,16 @@ public class JabriscaModel implements Runnable {
 						break;
 					case lobby:
 						if (instruction.contains("windowOpened")) {
-							// TODO Create game socket and try to join game
+							//TODO Populate lobby with data
+							String result = sendMessageToSomeSocket(ChatSocketServer.LOGIN_USER, "", chatSocket);
+							System.out.println("Fetched the following stuff:"+result);
+							if(result.contains(ChatSocketServer.LOGIN_SUCCESS)){
+								updateChat_Lobby("Jabrisca","Welcome!");
+							} else if(result.contains(ChatSocketServer.LOGIN_FAIL)){
+								updateChat_Lobby("Jabrisca","Error login into chat!");
+								JOptionPane.showMessageDialog(currentWindow, result);
+							}
+							
 							loadTopPlayers(currentPlayersPosition,
 									currentPlayersPosition
 											+ MAX_PLAYERS_RESULTS);
@@ -171,6 +185,15 @@ public class JabriscaModel implements Runnable {
 								} else {
 									// TODO user did not click yes
 								}
+							}
+						} else if(instruction.contains(CHAT_SOCKET)){
+							if(instruction.contains(ChatSocketServer.MESSAGE)){
+								String parameters = instruction.split("@")[1];
+								String username = ((parameters.split("username=")[1])
+										.split(",")[0]);
+								String message = ((parameters.split("message=")[1])
+										.split(",")[0]);
+								updateChat_Lobby(username, message);
 							}
 						}
 						break;
@@ -322,7 +345,7 @@ public class JabriscaModel implements Runnable {
 								"You play brisca as follows");
 					} else if (instruction.equals("reconnect")) {
 						attempConnection();
-					}
+					} 
 				} catch (Exception e) {
 					String output = "Unexpected minor error, gracefully dealing with it in "
 							+ getClass().getSimpleName()
@@ -343,6 +366,17 @@ public class JabriscaModel implements Runnable {
 
 	}
 
+	/**
+	 * @param username
+	 * @param message
+	 */
+	private void updateChat_Lobby(String username, String message) {
+		JTextArea display = (JTextArea)lobby.fetchComponent(null, "lobbyChat_display");
+		display.setText(display.getText()+
+				"\n"+
+				username+":"+message);
+	}
+
 	private void sendMessageToChat_GameBoard() {
 		// TODO Fetch all the 
 	}
@@ -351,7 +385,7 @@ public class JabriscaModel implements Runnable {
 		// TODO Auto-generated method stub
 		//sendMessageToSomeSocket(ManagerSocketServer.CREATE_GAME, parameters);
 		gameSocket = new SocketClient(hostURL, chatPort, instructions,
-				"GameSocket");
+				GAME_SOCKET);
 	}
 
 	private void sendMessageToChat_Lobby() {
@@ -425,7 +459,7 @@ public class JabriscaModel implements Runnable {
 	 */
 	private void transitionToState(ModelStates nextState)
 			throws IllegalStateException {
-		Object[] stateParameters = { "roomOne", false, false, true, true,
+		Object[] stateParameters = { "Username", "Password", false, true, true,
 				false, false, "MoveCardAnimation", null, 0 };
 		// Map all posible transitions
 		switch (state) {
@@ -573,9 +607,9 @@ public class JabriscaModel implements Runnable {
 	private void setupSocketConnection() throws Exception {
 		// TODO Auto-generated method stub
 		mainSocket = new SocketClient(hostURL, mainPort, instructions,
-				"ManagerSocket");
+				MANAGER_SOCKET);
 		chatSocket = new SocketClient(hostURL, chatPort, instructions,
-				"ChatSocket");
+				CHAT_SOCKET);
 		/**
 		 * chatPort = Integer.parseInt(mainSocket.sendMessageWaitResponse(
 		 * ManagerSocketServer.GET_CHAT_PORT, null, null).split(

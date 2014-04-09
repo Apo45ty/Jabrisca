@@ -1,10 +1,8 @@
 /**
  * 
  */
-package edu.uprm.ece.icom4015.jabrisca.server;
+package edu.uprm.ece.icom4015.jabrisca.server.brica;
 
-import edu.uprm.ece.icom4015.jabrisca.server.brica.GameRoom;
-import edu.uprm.ece.icom4015.jabrisca.server.brica.Player;
 
 /**
  * @author EltonJohn
@@ -64,6 +62,21 @@ public class BriscaGameRoom implements GameRoom {
 	public synchronized static GameRoom getInstance(int roomSize) {
 		// TODO Auto-generated method stub
 		return new BriscaGameRoom(roomSize);
+	}
+	/**
+	 * 
+	 */
+	public boolean playerMadeMove(Player player, Object[] parameters) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	/**
+	 * 
+	 */
+	public boolean setParameters(String[] KeyValuePairs) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

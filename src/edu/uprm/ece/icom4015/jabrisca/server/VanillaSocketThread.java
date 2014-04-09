@@ -54,8 +54,8 @@ public abstract class VanillaSocketThread implements Runnable {
 					}
 					waitingForResponse = false;
 					response = input;
-				}
-				main(input);
+				} else 
+					main(input);
 
 			}
 		} catch (Exception e) {
@@ -95,8 +95,8 @@ public abstract class VanillaSocketThread implements Runnable {
 	 */
 	public String sendMessageWaitResponse(String message) {
 		waitingForResponse = true;
+		out.println(message);
 		while (waitingForResponse){
-			out.println(message);
 		}
 		return response;
 	}

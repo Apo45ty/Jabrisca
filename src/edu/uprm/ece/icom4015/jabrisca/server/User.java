@@ -154,5 +154,9 @@ public class User {
 		return this.userNumber;
 	}
 	
+	@Override
+	public String toString() {
+		return username+"-"+score;
+	}
 	
 }

@@ -17,7 +17,13 @@ public class ChatRoom {
 		users= new User[userCount];
 		// TODO Setup other stuff 
 	}
-	
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean addUser(User user){
+		return ManagerSocketServer.allowcateUser(user, users);
+	}
 	/**
 	 * Only one ChatRoom may be created at a time
 	 * @param userCount
@@ -34,6 +40,7 @@ public class ChatRoom {
 	 */
 	public synchronized void broadCast(String message,User user){
 		for(User client:users){
+			if(client==null)continue;
 			if(client != user)
 				client.getChatSocket().sendMessage(message);
 		}

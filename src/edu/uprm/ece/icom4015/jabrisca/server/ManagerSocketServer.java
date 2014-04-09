@@ -15,9 +15,9 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static int managerSocketServerPort = 6767;
 	public static GameSocketServer gameServer;
 	public static ChatSocketServer chatServer;
-	private String[] badWords = { "cabron","pendejo", "popo", "puta" };
+	private String[] badWords = { "cabron", "pendejo", "popo", "puta" };
 	public static BlockingDeque bannedWords = new LinkedBlockingDeque();
-	public static int currentUsers=0;
+	public static int currentUsers = 0;
 	// Verbs
 	public static final String LOGIN_USER = "loginUser";
 	public static final String LOGIN_SUCCESS = "loginSuccess";
@@ -32,6 +32,10 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static final String LOGIN_FAIL = "loginFailed";
 	public static final String LOGOUT_SUCCESS = "logoutSuccess";
 	public static final String LOGOUT_USER = "logoutUser";
+	public static final String SIGNUP_FAILED_USERNAME_TAKEN = SIGNUP_FAILED+"-"+"UsenameTaken";
+	public static final String SHOW_USERS = "listUsers";
+	public static final String END_CONNECTION = "end";
+
 	/**
 	 * The constructor is an introvert and thus
 	 */
@@ -79,7 +83,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		if (ports != null && ports.length > 0) {
 			// TODO set ports
 		}
-		if (!listening){
+		if (!listening) {
 			(new Thread(this)).start();
 			listening = true;
 		}
@@ -92,7 +96,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		listening = true;
 		chatServer = ChatSocketServer.getServerSingleton();
 		chatServer.start(chatSocketServerPort);
-		gameServer =  GameSocketServer.getServerSingleton();
+		gameServer = GameSocketServer.getServerSingleton();
 		gameServer.start(gameSocketServerPort);
 		ServerSocket serverSocket = null;
 		try {
@@ -101,8 +105,8 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		System.out.println("ManagerServer listening on " + managerSocketServerPort
-				+ "...");
+		System.out.println("ManagerServer listening on "
+				+ managerSocketServerPort + "...");
 		while (listening) {
 			try {
 				Socket socket = serverSocket.accept();
@@ -116,7 +120,6 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			}
 		}
 	}
-	
 
 	class MainSocketThread extends VanillaSocketThread {
 
@@ -134,46 +137,74 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				if (pushedMessages.contains(SIGNUP_USER)) {
 					// TODO check if username is registed already
 					String parameters = pushedMessages.split("@")[1];
-					String username = ((parameters.split("username=")[1]).split(",")[0]);
-					String password = ((parameters.split("password=")[1]).split(",")[0]);
-					this.user = User.getInstance(username, password, 0);
-					if(allowcateUser(user)){
-						out.println(SIGNUP_SUCCESS + END_MESSAGE_DELIMETER);
-						System.out.println("Registered User" + username);
+					String username = ((parameters.split("username=")[1])
+							.split(",")[0]);
+					String password = ((parameters.split("password=")[1])
+							.split(",")[0]);
+					if (!userExists(username, password)) {
+						this.user = User.getInstance(username, password, 0);
+						if (allowcateUser(user,users)) {
+							out.println(SIGNUP_SUCCESS + END_MESSAGE_DELIMETER);
+							chatServer.addUser(user, ChatSocketServer.DEFAULT_ROOM);
+							user.setUserNumber(currentUsers);
+							user.setLoggedIn(true);
+							currentUsers++;
+							System.out.println("Registered User: " + username);
+						} else {
+							out.println(SIGNUP_FAILED + END_MESSAGE_DELIMETER);
+						}
 					} else {
-						out.println(SIGNUP_FAILED + END_MESSAGE_DELIMETER);
+						out.println(SIGNUP_FAILED_USERNAME_TAKEN + END_MESSAGE_DELIMETER);
 					}
 				} else if (pushedMessages.contains(LOGIN_USER)) {
 					// TODO check if user name is valid and create new user
 					String parameters = pushedMessages.split("@")[1];
-					String username = ((parameters.split("username=")[1]).split(",")[0]);
+					String username = ((parameters.split("username=")[1])
+							.split(",")[0]);
 					username = sanitizeWord(username);
-					String password = ((parameters.split("password=")[1]).split(",")[0]);
+					String password = ((parameters.split("password=")[1])
+							.split(",")[0]);
 					boolean userExists = false;
-					for(User user:users){
-						if(users ==null)continue;
-						if(user.getUsername().equals(username)&&user.getPassword().equals(password)){
+					for (User user : users) {
+						if (user == null)
+							continue;
+						if (user.getUsername().equals(username)
+								&& user.getPassword().equals(password)) {
 							userExists = true;
-							this.user = user;
-							user.setLoggedIn(userExists);
 							break;
 						}
 					}
-					if(userExists){
+					if (userExists) {
 						out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
+						this.user = user;
+						user.setLoggedIn(userExists);
+						
 					} else {
 						out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 					}
 				} else if (pushedMessages.contains(GET_CHAT_PORT)) {
 					// TODO check if user name is valid and create new user
 					out.println(chatSocketServerPort + END_MESSAGE_DELIMETER);
+				} else if (pushedMessages.contains(END_CONNECTION)) {
+					// TODO check if user name is valid and create new user
+					done =true;
+				} else if (pushedMessages.contains(SHOW_USERS)&&user!=null) {
+					// TODO check if user name is valid and create new user
+					String result = "";
+					for (User user : users) {
+						if (user == null)
+							continue;
+						result+=user+",";
+					}
+					result = result.substring(0, result.length()-1);
+					out.println(result + END_MESSAGE_DELIMETER);
 				} else if (pushedMessages.contains(GET_GAME_PORT)) {
 					// TODO check if user name is valid and create new user
 					out.println(gameSocketServerPort + END_MESSAGE_DELIMETER);
 				} else if (pushedMessages.contains(CREATE_GAME)) {
 					// TODO do something special: verify game can be created,
 					// switch the user to the proper chat room, create game ...
-					
+
 				} else if (pushedMessages.contains(JOIN_GAME)) {
 					// TODO do something special: verify game can be Joined,
 					// switch the user to the proper chat room, create game ...
@@ -185,45 +216,57 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			}
 		}
 
-		
+		private boolean userExists(String username, String password) {
+			boolean userExists = false;
+			for(User user:users){
+				if(user ==null)continue;
+				if(user.getUsername().equals(username)){
+					userExists = true;
+					break;
+				}
+			}
+			return userExists;
+		}
+
 	}
 
 	/**
-	 * This method is placed here because it I don't want to recreate it on every socket instance
+	 * This method is placed here because it I don't want to recreate it on
+	 * every socket instance
+	 * 
 	 * @param instance
 	 * @return
 	 */
-	public static synchronized boolean allowcateUser(User instance) {
-		for(int i=0;i<users.length;i++){
-			if(users[i] == null){
+	public static synchronized boolean allowcateUser(User instance,User[] users) {
+		for (int i = 0; i < users.length; i++) {
+			if (users[i] == null) {
 				users[i] = instance;
-				instance.setUserNumber(i);
-				instance.setLoggedIn(true);
-				currentUsers++;
 				return true;
 			}
 		}
-		//could not allocate space for user
+		// could not allocate space for user
 		return false;
 	}
+
 	/**
-	 * Very BadAlgorithm switch for dictionary
+	 * Very BadAlgorithm; switch for dictionary related algorithm
+	 * 
 	 * @param word
 	 * @return the input word without all the bannedwords
 	 */
 	public static String sanitizeWord(String word) {
 		String result = word;
-		for(Object obj:bannedWords){
-			String badWord = (String)obj;
-			if(word.contains(badWord)){
+		for (Object obj : bannedWords) {
+			String badWord = (String) obj;
+			if (word.contains(badWord)) {
 				result = "";
-				for(String part: word.split(word))
-				{
-					result+=part;
+				// RemoveInstanceOfWord and add all other parts
+				for (String part : word.split(word)) {
+					result += part;
 				}
 			}
 		}
 		return result;
 	}
-	
+
 }

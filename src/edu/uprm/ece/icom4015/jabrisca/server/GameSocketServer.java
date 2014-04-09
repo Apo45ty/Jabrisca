@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import edu.uprm.ece.icom4015.jabrisca.server.brica.BriscaGameRoom;
 import edu.uprm.ece.icom4015.jabrisca.server.brica.GameRoom;
 import edu.uprm.ece.icom4015.jabrisca.server.brica.Player;
 
@@ -104,7 +105,7 @@ public class GameSocketServer extends VanillaSocketServer {
 	}
 
 	class GameSocketThread extends VanillaSocketThread {
-		private GameRoom room;
+		public GameRoom room;
 		private User user;
 
 		/**

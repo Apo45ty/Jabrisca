@@ -9,6 +9,7 @@ public class ChatSocketServer extends VanillaSocketServer {
 	public static final int DEFAULT_ROOM = MAX_NUMBER_OF_ROOMS + 1 - 1;
 	private static boolean listening = false;
 	private static ChatSocketServer instance;
+	private static int currentUsers = 0;
 	private ChatRoom[] rooms = new ChatRoom[MAX_NUMBER_OF_ROOMS + 1];
 	private int port = ManagerSocketServer.chatSocketServerPort;
 	// Verbs
@@ -18,17 +19,20 @@ public class ChatSocketServer extends VanillaSocketServer {
 	public static final String MESSAGE = "userHasAMessage";
 	public static final String USER_IS_TYPING = "userIsTyping";
 	public static final String END_MESSAGE_DELIMETER = ManagerSocketServer.END_MESSAGE_DELIMETER;
+	public static final String SHOW_USERS = ManagerSocketServer.SHOW_USERS;
 
 	/**
 	 * The constructor is an introvert and thus
 	 */
 	private ChatSocketServer() {
 		super();
-		for(int i=0;i<rooms.length;i++){
-			if(i==DEFAULT_ROOM)
-				rooms[i] = ChatRoom.getInstance(GameSocketServer.MAX_NUMBER_OF_USERS_PER_GAME);
+		for (int i = 0; i < rooms.length; i++) {
+			if (i == DEFAULT_ROOM)
+				rooms[i] = ChatRoom
+						.getInstance(ManagerSocketServer.MAX_CLIENTS);
 			else
-				rooms[i] = ChatRoom.getInstance(ManagerSocketServer.MAX_CLIENTS);
+				rooms[i] = ChatRoom
+						.getInstance(GameSocketServer.MAX_NUMBER_OF_USERS_PER_GAME);
 		}
 	}
 
@@ -51,7 +55,7 @@ public class ChatSocketServer extends VanillaSocketServer {
 	 */
 	public synchronized static ChatSocketServer getServerSingleton() {
 		if (instance == null) {
-			instance = new ChatSocketServer();                                                                                                                                                                                               
+			instance = new ChatSocketServer();
 		}
 		return instance;
 	}
@@ -63,7 +67,7 @@ public class ChatSocketServer extends VanillaSocketServer {
 		if (ports != null && ports.length > 0) {
 			// TODO set ports
 		}
-		if (!listening){
+		if (!listening) {
 			(new Thread(this)).start();
 			listening = true;
 		}
@@ -98,7 +102,7 @@ public class ChatSocketServer extends VanillaSocketServer {
 
 	class ChatSocketThread extends VanillaSocketThread {
 
-		private ChatRoom room;
+		public ChatRoom room;
 		private User user;
 
 		public ChatSocketThread(Socket socket) {
@@ -110,7 +114,6 @@ public class ChatSocketServer extends VanillaSocketServer {
 			try {
 				System.out.println(pushedMessages);
 				if (pushedMessages.contains(LOGIN_USER)) {
-					room = rooms[DEFAULT_ROOM];
 					String parameters = pushedMessages.split("@")[1];
 					String username = ((parameters.split("username=")[1])
 							.split(",")[0]);
@@ -118,17 +121,20 @@ public class ChatSocketServer extends VanillaSocketServer {
 							.split(",")[0]);
 					boolean userExists = false;
 					for (User user : users) {
-						if(users ==null)continue;
+						if (user == null)
+							continue;
 						if (user.getUsername().equals(username)
 								&& user.getPassword().equals(password)) {
 							userExists = true;
-							user.setChatSocket(this);
 							this.user = user;
 							break;
 						}
 					}
 					if (userExists) {
 						out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
+						room = rooms[DEFAULT_ROOM];
+						room.addUser(user);
+						user.setChatSocket(this);
 					} else {
 						out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 					}
@@ -139,13 +145,25 @@ public class ChatSocketServer extends VanillaSocketServer {
 					String message = ((parameters.split("message=")[1])
 							.split(",")[0]);
 					message = ManagerSocketServer.sanitizeWord(message);
-					room.broadCast("username="+username+","+MESSAGE+"="+message, user);
+					room.broadCast(MESSAGE + "@username=" + username + ","
+							+"message=" + message, user);
 				} else if (pushedMessages.contains(USER_IS_TYPING)) {
 					String parameters = pushedMessages.split("@")[1];
 					String username = ((parameters.split("username=")[1])
 							.split(",")[0]);
-					room.broadCast("username="+username+","+USER_IS_TYPING+"=" +USER_IS_TYPING, user);
-				} 
+					room.broadCast(USER_IS_TYPING + "@username=" + username
+							+ "," + USER_IS_TYPING + "=" + USER_IS_TYPING, user);
+				} else if (pushedMessages.contains(SHOW_USERS)&&user!=null) {
+					// TODO check if user name is valid and create new user
+					String result = "";
+					for (User user : users) {
+						if (user == null)
+							continue;
+						result+=user+",";
+					}
+					result = result.substring(0, result.length()-1);
+					out.println(result + END_MESSAGE_DELIMETER);
+				}
 			} catch (Exception e) {
 				System.out.println("Gracefully dealt with error in "
 						+ getClass().getTypeName() + ",Excetion"
@@ -153,5 +171,12 @@ public class ChatSocketServer extends VanillaSocketServer {
 			}
 		}
 
+	}
+
+	public static synchronized boolean addUser(User user,int roomName) {
+		boolean couldAllocate= ManagerSocketServer.allowcateUser(user, users);
+		if(couldAllocate)
+			currentUsers++;
+		return couldAllocate;
 	}
 }

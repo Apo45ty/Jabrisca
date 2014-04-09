@@ -6,4 +6,6 @@ public interface GameRoom {
 	int getSize();
 	boolean isPlaying();
 	Player[] getPlayers();
+	boolean playerMadeMove(Player player,Object[] parameters);
+	boolean setParameters(String[] KeyValuePairs);
 }
