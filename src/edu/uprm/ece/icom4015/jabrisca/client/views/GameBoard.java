@@ -13,8 +13,7 @@ import edu.uprm.ece.icom4015.jabrisca.client.JabriscaController;
  * 
  * @author EltonJohn
  */
-public class GameBoard extends JabriscaJPanel implements
-		AnimatedJabriscaJPanel {
+public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel {
 
 	private MyAnimator myAnimator;
 
@@ -316,11 +315,9 @@ public class GameBoard extends JabriscaJPanel implements
 	}// </editor-fold>//GEN-END:initComponents
 
 	private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jMenuItem1ActionPerformed
-		// TODO add your handling code here:
 	}// GEN-LAST:event_jMenuItem1ActionPerformed
 
 	private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jMenuItem2ActionPerformed
-		// TODO add your handling code here:
 	}// GEN-LAST:event_jMenuItem2ActionPerformed
 
 	/**
@@ -363,17 +360,18 @@ public class GameBoard extends JabriscaJPanel implements
 		/* Create and display the form */
 		java.awt.EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				((JabriscaJPanel)board).setVisible(true);
+				((JabriscaJPanel) board).setVisible(true);
 			}
 		});
 		try {
 			Thread.currentThread().sleep(1000);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//"MoveCardAnimation","boardGame_myCard1","boardGame_player1Card"
-		board.animate("MoveCardAnimation","boardGame_myCard1","boardGame_player1Card");
+		// TODO fix the animations
+		// "MoveCardAnimation","boardGame_myCard1","boardGame_player1Card"
+		board.animate("MoveCardAnimation", "boardGame_myCard1",
+				"boardGame_player1Card");
 	}
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
@@ -421,19 +419,20 @@ public class GameBoard extends JabriscaJPanel implements
 	public boolean animate(String animation, String target, String destination) {
 		return myAnimator.animate(animation, target, destination);
 	}
-	
+
 	/**
 	 * Asynchronous animation
+	 * 
 	 * @param animation
 	 * @param target
 	 * @param destination
 	 * @return
 	 */
-	public boolean animateAsync(String animation, String target, String destination) {
+	public boolean animateAsync(String animation, String target,
+			String destination) {
 		return myAnimator.animateAsync(animation, target, destination);
 	}
-	
-	
+
 	public boolean hasAnimation(String animation) {
 		// TODO Auto-generated method stub
 		return false;
@@ -529,27 +528,31 @@ public class GameBoard extends JabriscaJPanel implements
 
 	class MoveCardAnimation implements AnimationType {
 		String[] posibleTargets = { "boardGame_myCard1", "boardGame_myCard2",
-				"boardGame_myCard3" }; 
+				"boardGame_myCard3" };
 
 		DestinationObject[] posibleDestinationNames = {
-				new DestinationObject("boardGame_player1Card", new Point(333,
-						58)),
-				new DestinationObject("boardGame_player2Card", new Point(493,
-						58)),
-				new DestinationObject("boardGame_player3Card", new Point(333,
-						328)),
-				new DestinationObject("boardGame_player4Card", new Point(493,
-						328)) };
+				new DestinationObject("boardGame_player1Card", fetchComponent(
+						null, "boardGame_player1Card")),
+				new DestinationObject("boardGame_player2Card", fetchComponent(
+						null, "boardGame_player2Card")),
+				new DestinationObject("boardGame_player3Card", fetchComponent(
+						null, "boardGame_player3Card")),
+				new DestinationObject("boardGame_player4Card", fetchComponent(
+						null, "boardGame_player4Card")) };
 		String target;
-		Point destination;
+		DestinationObject destination;
 		int xStep = 5, yStep = 5, tStep = 750;
 		Timer timmer;
 		Component target_component;
-		int destinationXOffset; // X Offset of pixels used to determine if card
-								// is near the desired point
-		int destinationYOffset; // Y Offset of pixels used to determine if card
-								// is near the desired point
-		boolean animating = false; // variable that checks if an animation is ocuring
+		int destinationXOffset = 5; // X Offset of pixels used to determine if
+									// card
+									// is near the desired point
+		int destinationYOffset = 5; // Y Offset of pixels used to determine if
+									// card
+									// is near the desired point
+		boolean animating = false; // variable that checks if an animation is
+									// ocuring
+
 		public MoveCardAnimation() {
 		}
 
@@ -583,25 +586,31 @@ public class GameBoard extends JabriscaJPanel implements
 
 		public boolean animate() {
 			animateAsync();
-			while(animating);
+			while (animating)
+				;
 			return true;
 		}
 
 		public void animateAsync() {
 			animating = true;
-			final int dirrectionX = (destination.x
-					- target_component.getLocationOnScreen().x)
-					/ Math.abs(destination.x
-							- target_component.getLocationOnScreen().x), dirrectionY = (destination.y
-					- target_component.getLocationOnScreen().y)
-					/ Math.abs(destination.y
-							- target_component.getLocationOnScreen().y);
 			timmer = new Timer(tStep, new ActionListener() {
 
 				public void actionPerformed(ActionEvent arg0) {
-					if (Math.abs(destination.x
+					int dirrectionX = (destination.pointMarker
+							.getLocationOnScreen().x - target_component
+							.getLocationOnScreen().x)
+							/ Math.abs(destination.pointMarker
+									.getLocationOnScreen().x
+									- target_component.getLocationOnScreen().x), dirrectionY = (destination.pointMarker
+							.getLocationOnScreen().y - target_component
+							.getLocationOnScreen().y)
+							/ Math.abs(destination.pointMarker
+									.getLocationOnScreen().y
+									- target_component.getLocationOnScreen().y);
+
+					if (Math.abs(destination.pointMarker.getLocationOnScreen().x
 							- target_component.getLocationOnScreen().x) > destinationXOffset
-							&& Math.abs(destination.y
+							&& Math.abs(destination.pointMarker.getLocationOnScreen().y
 									- target_component.getLocationOnScreen().y) > destinationYOffset) {
 						// TODO move card
 						target_component.move(dirrectionX * xStep, dirrectionY
@@ -631,8 +640,7 @@ public class GameBoard extends JabriscaJPanel implements
 		}
 
 		/**
-		 * Accepted destination formats componentName or
-		 * coordinates:x=##,y=##
+		 * Accepted destination formats componentName or coordinates:x=##,y=##
 		 */
 		public boolean setDestination(String destination) {
 			if (destination.contains("coordinates:")) {
@@ -641,12 +649,15 @@ public class GameBoard extends JabriscaJPanel implements
 						"x=", ""));
 				int y = Integer.parseInt(destination.split(",")[1].replace(
 						"y=", ""));
-				this.destination = new Point(x, y);
-			} else{
+				this.destination = new DestinationObject("new",
+						new Component() {
+						});
+				this.destination.pointMarker.setLocation(new Point(x, y));
+			} else {
 				// see if destination is saved
 				for (DestinationObject component : posibleDestinationNames) {
 					if (component.name.equals(destination)) {
-						this.destination = component.pointMarker;
+						this.destination = component;
 						return true;
 					}
 				}
@@ -658,9 +669,9 @@ public class GameBoard extends JabriscaJPanel implements
 
 	class DestinationObject {
 		public String name;
-		public Point pointMarker;
+		public Component pointMarker;
 
-		public DestinationObject(String name, Point pointMarker) {
+		public DestinationObject(String name, Component pointMarker) {
 			super();
 			this.name = name;
 			this.pointMarker = pointMarker;

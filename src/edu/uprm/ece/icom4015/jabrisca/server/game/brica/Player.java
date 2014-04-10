@@ -1,18 +1,44 @@
 /**
  * 
  */
-package edu.uprm.ece.icom4015.jabrisca.server.brica;
+package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
+
+import java.util.Date;
 
 import edu.uprm.ece.icom4015.jabrisca.server.User;
 
 /**
  * @author EltonJohn
- *
  */
 public class Player {
 	private int score;
 	private User user;
-	
+	private int seatNumber;
+	private Date lastPlayDate;
+	/**
+	 * @return the lastPlayDate
+	 */
+	public synchronized Date getLastPlayDate() {
+		return lastPlayDate;
+	}
+	/**
+	 * @param lastPlayDate the lastPlayDate to set
+	 */
+	public synchronized void setLastPlayDate(Date lastPlayDate) {
+		this.lastPlayDate = lastPlayDate;
+	}
+	/**
+	 * @return the seatNumber
+	 */
+	public synchronized int getSeatNumber() {
+		return seatNumber;
+	}
+	/**
+	 * @param seatNumber the seatNumber to set
+	 */
+	public synchronized void setSeatNumber(int seatNumber) {
+		this.seatNumber = seatNumber;
+	}
 	/**
 	 * @param score
 	 * @param user

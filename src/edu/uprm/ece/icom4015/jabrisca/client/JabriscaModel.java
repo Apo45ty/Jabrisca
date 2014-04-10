@@ -67,7 +67,6 @@ public class JabriscaModel implements Runnable {
 					try {
 						instruction = (String) instructions.take();
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 
@@ -344,6 +343,7 @@ public class JabriscaModel implements Runnable {
 						JOptionPane.showMessageDialog(currentWindow,
 								"You play brisca as follows");
 					} else if (instruction.equals("reconnect")) {
+						setState(ModelStates.loginsingup);
 						attempConnection();
 					} 
 				} catch (Exception e) {
@@ -459,6 +459,7 @@ public class JabriscaModel implements Runnable {
 	 */
 	private void transitionToState(ModelStates nextState)
 			throws IllegalStateException {
+		//TODO Actually implements this method fetch the value of the parameters for the next state
 		Object[] stateParameters = { "Username", "Password", false, true, true,
 				false, false, "MoveCardAnimation", null, 0 };
 		// Map all posible transitions

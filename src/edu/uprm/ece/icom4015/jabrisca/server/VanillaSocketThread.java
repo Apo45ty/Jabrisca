@@ -22,7 +22,6 @@ public abstract class VanillaSocketThread implements Runnable {
 					socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream(), true);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -34,10 +33,10 @@ public abstract class VanillaSocketThread implements Runnable {
 					socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream(), true);
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
+			// TODO Handle connection errors
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			// TODO Handle connection errors
 			e.printStackTrace();
 		}
 
@@ -66,7 +65,7 @@ public abstract class VanillaSocketThread implements Runnable {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				// TODO Handle connection errors
 				e.printStackTrace();
 			}
 		}

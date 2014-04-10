@@ -5,12 +5,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ChatSocketServer extends VanillaSocketServer {
-	public static final int MAX_NUMBER_OF_ROOMS = 15;
-	public static final int DEFAULT_ROOM = MAX_NUMBER_OF_ROOMS + 1 - 1;
+	public static final int MAX_NUMBER_OF_ROOMS = 15; //this does not include the default room that is always added
+	public static final int DEFAULT_ROOM = MAX_NUMBER_OF_ROOMS + 1 - 1; // thus the total number rooms goes up by one
 	private static boolean listening = false;
 	private static ChatSocketServer instance;
 	private static int currentUsers = 0;
-	private ChatRoom[] rooms = new ChatRoom[MAX_NUMBER_OF_ROOMS + 1];
+	private static ChatRoom[] rooms = new ChatRoom[MAX_NUMBER_OF_ROOMS + 1];
 	private int port = ManagerSocketServer.chatSocketServerPort;
 	// Verbs
 	public static final String LOGIN_USER = ManagerSocketServer.LOGIN_USER;
@@ -68,8 +68,8 @@ public class ChatSocketServer extends VanillaSocketServer {
 			// TODO set ports
 		}
 		if (!listening) {
-			(new Thread(this)).start();
 			listening = true;
+			(new Thread(this)).start();
 		}
 	}
 
@@ -81,7 +81,6 @@ public class ChatSocketServer extends VanillaSocketServer {
 		try {
 			serverSocket = new ServerSocket(port);
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		System.out.println("ChatServer listening on " + port + "...");
@@ -93,7 +92,7 @@ public class ChatSocketServer extends VanillaSocketServer {
 				(new Thread(myThread)).start();
 			} catch (Exception e) {
 				System.out.println("Gracefully dealt with error in "
-						+ getClass().getTypeName() + ",Exception"
+						/*+ getClass().getTypeName()*/ + ",Exception"
 						+ e.getMessage());
 			}
 		}
@@ -132,8 +131,7 @@ public class ChatSocketServer extends VanillaSocketServer {
 					}
 					if (userExists) {
 						out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
-						room = rooms[DEFAULT_ROOM];
-						room.addUser(user);
+						setRoom(DEFAULT_ROOM);
 						user.setChatSocket(this);
 					} else {
 						out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
@@ -154,7 +152,6 @@ public class ChatSocketServer extends VanillaSocketServer {
 					room.broadCast(USER_IS_TYPING + "@username=" + username
 							+ "," + USER_IS_TYPING + "=" + USER_IS_TYPING, user);
 				} else if (pushedMessages.contains(SHOW_USERS)&&user!=null) {
-					// TODO check if user name is valid and create new user
 					String result = "";
 					for (User user : users) {
 						if (user == null)
@@ -163,20 +160,37 @@ public class ChatSocketServer extends VanillaSocketServer {
 					}
 					result = result.substring(0, result.length()-1);
 					out.println(result + END_MESSAGE_DELIMETER);
-				}
+				} //TODO add the rest of the methods
 			} catch (Exception e) {
 				System.out.println("Gracefully dealt with error in "
-						+ getClass().getTypeName() + ",Excetion"
+						/*+ getClass().getTypeName() */+ ",Excetion"
 						+ e.getClass().getSimpleName());
 			}
 		}
-
+		
+		public boolean setRoom(int roomNum){
+			if(room!=null)
+				room.removeUser(user);
+			room = rooms[roomNum]; 
+			room.addUser(user);
+			return true;
+		}
+		
 	}
-
-	public static synchronized boolean addUser(User user,int roomName) {
+	/**
+	 * Add User to a room and to chat list
+	 * @param user
+	 * @param roomName
+	 * @return
+	 */
+	public static synchronized boolean addUser(User user) {
 		boolean couldAllocate= ManagerSocketServer.allowcateUser(user, users);
 		if(couldAllocate)
-			currentUsers++;
+			currentUsers++;	
 		return couldAllocate;
 	}
+	
+	
+	
+	
 }

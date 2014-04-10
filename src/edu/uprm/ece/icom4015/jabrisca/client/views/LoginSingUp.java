@@ -1,5 +1,7 @@
 package edu.uprm.ece.icom4015.jabrisca.client.views;
 
+import javax.swing.AbstractButton;
+
 import edu.uprm.ece.icom4015.jabrisca.client.JabriscaController;
 
 /**
@@ -48,7 +50,8 @@ public class LoginSingUp extends JabriscaJPanel {
         jMenuBar3 = new javax.swing.JMenuBar();
         jMenu4 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
-
+        jButton8 = new javax.swing.JButton();
+        
         jMenu2.setText("File");
         jMenuBar2.add(jMenu2);
 
@@ -83,12 +86,20 @@ public class LoginSingUp extends JabriscaJPanel {
         jTextField4.setName("username");
         jPanel2.add(jTextField4);
         jTextField4.setBounds(370, 240, 140, 50);
+        
 
+        
         jButton3.setText("Sign Up!");
         jButton3.setName("singup"); // NOI18N
         jPanel2.add(jButton3);
         jButton3.setBounds(370, 400, 140, 23);
-
+        
+        
+        jButton8.setText("Guest");
+        jButton8.setName("guest"); // NOI18N
+        jPanel2.add(jButton8);
+        jButton8.setBounds(370, 430, 140, 23);
+        
         jButton4.setText("Login");
         jButton4.setName("login"); // NOI18N
         jPanel2.add(jButton4);
@@ -128,8 +139,7 @@ public class LoginSingUp extends JabriscaJPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
+      }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -161,12 +171,13 @@ public class LoginSingUp extends JabriscaJPanel {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LoginSingUp(new JabriscaController()).setVisible(true);
+                new LoginSingUp().setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;

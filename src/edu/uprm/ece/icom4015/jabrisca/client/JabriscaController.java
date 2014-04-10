@@ -49,7 +49,6 @@ public class JabriscaController implements ActionListener, KeyListener,
 	 *            to enqueue
 	 */
 	private void enqueueCommands(String command) {
-		// TODO
 		// System.out.println(command);
 		queue.offer(command);// use default timeout for the offering
 	}

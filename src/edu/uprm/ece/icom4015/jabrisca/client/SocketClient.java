@@ -36,11 +36,9 @@ public class SocketClient extends VanillaSocketThread {
 	 */
 	@Override
 	public void main(String pushedMessages) {
-		//TODO
 		try {
 			instructionsToModel.put(name+"-"+pushedMessages);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

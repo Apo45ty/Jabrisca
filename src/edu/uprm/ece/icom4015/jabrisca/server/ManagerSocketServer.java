@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameListener;
+
 public class ManagerSocketServer extends VanillaSocketServer {
 	private static ManagerSocketServer instance;
 	private static boolean listening = false;
@@ -32,7 +34,8 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static final String LOGIN_FAIL = "loginFailed";
 	public static final String LOGOUT_SUCCESS = "logoutSuccess";
 	public static final String LOGOUT_USER = "logoutUser";
-	public static final String SIGNUP_FAILED_USERNAME_TAKEN = SIGNUP_FAILED+"-"+"UsenameTaken";
+	public static final String SIGNUP_FAILED_USERNAME_TAKEN = SIGNUP_FAILED
+			+ "-" + "UsenameTaken";
 	public static final String SHOW_USERS = "listUsers";
 	public static final String END_CONNECTION = "end";
 
@@ -80,12 +83,15 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	 * @param ports
 	 */
 	public synchronized void start(int... ports) {
-		if (ports != null && ports.length > 0) {
+		if (ports != null && ports.length > 3) {
 			// TODO set ports
+			gameSocketServerPort = ports[0];
+			chatSocketServerPort = ports[1];
+			managerSocketServerPort = ports[2];
 		}
 		if (!listening) {
-			(new Thread(this)).start();
 			listening = true;
+			(new Thread(this)).start();
 		}
 	}
 
@@ -93,7 +99,6 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	 * 
 	 */
 	public void run() {
-		listening = true;
 		chatServer = ChatSocketServer.getServerSingleton();
 		chatServer.start(chatSocketServerPort);
 		gameServer = GameSocketServer.getServerSingleton();
@@ -102,7 +107,6 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		try {
 			serverSocket = new ServerSocket(managerSocketServerPort);
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		System.out.println("ManagerServer listening on "
@@ -121,7 +125,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		}
 	}
 
-	class MainSocketThread extends VanillaSocketThread {
+	class MainSocketThread extends VanillaSocketThread implements GameListener{
 
 		private User user;
 
@@ -139,13 +143,15 @@ public class ManagerSocketServer extends VanillaSocketServer {
 					String parameters = pushedMessages.split("@")[1];
 					String username = ((parameters.split("username=")[1])
 							.split(",")[0]);
+					// Clean the word
+					username = sanitizeWord(username);
 					String password = ((parameters.split("password=")[1])
 							.split(",")[0]);
 					if (!userExists(username, password)) {
 						this.user = User.getInstance(username, password, 0);
-						if (allowcateUser(user,users)) {
+						if (allowcateUser(user, users)) {
 							out.println(SIGNUP_SUCCESS + END_MESSAGE_DELIMETER);
-							chatServer.addUser(user, ChatSocketServer.DEFAULT_ROOM);
+							chatServer.addUser(user);
 							user.setUserNumber(currentUsers);
 							user.setLoggedIn(true);
 							currentUsers++;
@@ -154,14 +160,14 @@ public class ManagerSocketServer extends VanillaSocketServer {
 							out.println(SIGNUP_FAILED + END_MESSAGE_DELIMETER);
 						}
 					} else {
-						out.println(SIGNUP_FAILED_USERNAME_TAKEN + END_MESSAGE_DELIMETER);
+						out.println(SIGNUP_FAILED_USERNAME_TAKEN
+								+ END_MESSAGE_DELIMETER);
 					}
 				} else if (pushedMessages.contains(LOGIN_USER)) {
 					// TODO check if user name is valid and create new user
 					String parameters = pushedMessages.split("@")[1];
 					String username = ((parameters.split("username=")[1])
 							.split(",")[0]);
-					username = sanitizeWord(username);
 					String password = ((parameters.split("password=")[1])
 							.split(",")[0]);
 					boolean userExists = false;
@@ -178,37 +184,34 @@ public class ManagerSocketServer extends VanillaSocketServer {
 						out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
 						this.user = user;
 						user.setLoggedIn(userExists);
-						
 					} else {
 						out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 					}
 				} else if (pushedMessages.contains(GET_CHAT_PORT)) {
-					// TODO check if user name is valid and create new user
 					out.println(chatSocketServerPort + END_MESSAGE_DELIMETER);
 				} else if (pushedMessages.contains(END_CONNECTION)) {
-					// TODO check if user name is valid and create new user
-					done =true;
-				} else if (pushedMessages.contains(SHOW_USERS)&&user!=null) {
-					// TODO check if user name is valid and create new user
+					done = true;
+				} else if (pushedMessages.contains(SHOW_USERS) && user != null) {
+					// TODO check if user is loggin
 					String result = "";
 					for (User user : users) {
 						if (user == null)
 							continue;
-						result+=user+",";
+						result += user + ",";
 					}
-					result = result.substring(0, result.length()-1);
+					result = result.substring(0, result.length() - 1);
 					out.println(result + END_MESSAGE_DELIMETER);
 				} else if (pushedMessages.contains(GET_GAME_PORT)) {
-					// TODO check if user name is valid and create new user
 					out.println(gameSocketServerPort + END_MESSAGE_DELIMETER);
+				} else if (pushedMessages.contains(LOGOUT_USER)) {
+					out.println(LOGOUT_SUCCESS + END_MESSAGE_DELIMETER);
 				} else if (pushedMessages.contains(CREATE_GAME)) {
 					// TODO do something special: verify game can be created,
 					// switch the user to the proper chat room, create game ...
-
 				} else if (pushedMessages.contains(JOIN_GAME)) {
 					// TODO do something special: verify game can be Joined,
 					// switch the user to the proper chat room, create game ...
-				}
+				} //TODO rest of methods
 			} catch (Exception e) {
 				System.out.println("Gracefully dealt with error in "
 						+ getClass().getTypeName() + ",Exception"
@@ -218,14 +221,29 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 		private boolean userExists(String username, String password) {
 			boolean userExists = false;
-			for(User user:users){
-				if(user ==null)continue;
-				if(user.getUsername().equals(username)){
+			for (User user : users) {
+				if (user == null)
+					continue;
+				if (user.getUsername().equals(username)) {
 					userExists = true;
 					break;
 				}
 			}
 			return userExists;
+		}
+
+		/**
+		 * 
+		 */
+		public void onGameEnd(GameEvent e) {
+			main(e.sourceGame+GameSocketServer.GAME_ENDED);
+		}
+		
+		/**
+		 * 
+		 */
+		public void onGameStart(GameEvent e) {
+			main(e.sourceGame+GameSocketServer.GAME_STARTED);
 		}
 
 	}
@@ -237,7 +255,8 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	 * @param instance
 	 * @return
 	 */
-	public static synchronized boolean allowcateUser(User instance,User[] users) {
+	public static synchronized boolean allowcateUser(Object instance,
+			Object[] users) {
 		for (int i = 0; i < users.length; i++) {
 			if (users[i] == null) {
 				users[i] = instance;
@@ -250,7 +269,6 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 	/**
 	 * Very BadAlgorithm; switch for dictionary related algorithm
-	 * 
 	 * @param word
 	 * @return the input word without all the bannedwords
 	 */

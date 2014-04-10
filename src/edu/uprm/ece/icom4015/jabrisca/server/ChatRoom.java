@@ -45,4 +45,13 @@ public class ChatRoom {
 				client.getChatSocket().sendMessage(message);
 		}
 	}
+	public boolean removeUser(User user) {
+		for(int i=0;i<users.length;i++){
+			if(users[i]==user){
+				users[i] = null;
+				return true;
+			}
+		}
+		return false;
+	}
 }
