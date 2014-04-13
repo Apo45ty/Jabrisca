@@ -1,6 +1,5 @@
-package edu.uprm.ece.icom4015.jabrisca.server;
+package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
-import edu.uprm.ece.icom4015.jabrisca.server.game.brica.BriscaGameRoom;
 
 public interface GameLawEnforcer extends Runnable {
 	/*

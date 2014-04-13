@@ -57,11 +57,13 @@ public abstract class VanillaSocketThread implements Runnable {
 					main(input);
 
 			}
+		} catch(java.net.SocketException e){
+			e.printStackTrace();
 		} catch (Exception e) {
+		
 			System.out.println("Gracefully dealt with error in "
 					+ getClass().getTypeName() + ",Excetion" + e.getMessage());
 		} finally {
-
 			try {
 				socket.close();
 			} catch (IOException e) {

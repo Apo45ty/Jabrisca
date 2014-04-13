@@ -1,11 +1,9 @@
 /**
  * 
  */
-package edu.uprm.ece.icom4015.jabrisca.server;
+package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
 import java.util.Date;
-
-import edu.uprm.ece.icom4015.jabrisca.server.game.brica.Player;
 
 /**
  * @author EltonJohn

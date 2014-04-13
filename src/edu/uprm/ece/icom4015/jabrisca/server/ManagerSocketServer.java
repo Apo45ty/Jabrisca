@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameEvent;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameListener;
 
 public class ManagerSocketServer extends VanillaSocketServer {
@@ -125,7 +126,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		}
 	}
 
-	class MainSocketThread extends VanillaSocketThread implements GameListener{
+	class MainSocketThread extends VanillaSocketThread implements GameListener {
 
 		private User user;
 
@@ -135,88 +136,85 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 		@Override
 		public void main(String pushedMessages) {
-			// TODO implement socket on the server
-			try {
-				System.out.println(pushedMessages);
-				if (pushedMessages.contains(SIGNUP_USER)) {
-					// TODO check if username is registed already
-					String parameters = pushedMessages.split("@")[1];
-					String username = ((parameters.split("username=")[1])
-							.split(",")[0]);
-					// Clean the word
-					username = sanitizeWord(username);
-					String password = ((parameters.split("password=")[1])
-							.split(",")[0]);
-					if (!userExists(username, password)) {
-						this.user = User.getInstance(username, password, 0);
-						if (allowcateUser(user, users)) {
-							out.println(SIGNUP_SUCCESS + END_MESSAGE_DELIMETER);
-							chatServer.addUser(user);
-							user.setUserNumber(currentUsers);
-							user.setLoggedIn(true);
-							currentUsers++;
-							System.out.println("Registered User: " + username);
-						} else {
-							out.println(SIGNUP_FAILED + END_MESSAGE_DELIMETER);
-						}
+			System.out.println(pushedMessages);
+			if (pushedMessages.contains(SIGNUP_USER)) {
+				// TODO check if username is registed already
+				String parameters = pushedMessages.split("@")[1];
+				String username = ((parameters.split("username=")[1])
+						.split(",")[0]);
+				// Clean the word
+				username = sanitizeWord(username);
+				String password = ((parameters.split("password=")[1])
+						.split(",")[0]);
+				if (!userExists(username, password)) {
+					this.user = User.getInstance(username, password, 0);
+					if (allowcateUser(user, users)) {
+						out.println(SIGNUP_SUCCESS + END_MESSAGE_DELIMETER);
+						chatServer.addUser(user);
+						user.setUserNumber(currentUsers);
+						user.setLoggedIn(true);
+						currentUsers++;
+						System.out.println("Registered User: " + username);
 					} else {
-						out.println(SIGNUP_FAILED_USERNAME_TAKEN
-								+ END_MESSAGE_DELIMETER);
+						out.println(SIGNUP_FAILED + END_MESSAGE_DELIMETER);
 					}
-				} else if (pushedMessages.contains(LOGIN_USER)) {
-					// TODO check if user name is valid and create new user
-					String parameters = pushedMessages.split("@")[1];
-					String username = ((parameters.split("username=")[1])
-							.split(",")[0]);
-					String password = ((parameters.split("password=")[1])
-							.split(",")[0]);
-					boolean userExists = false;
-					for (User user : users) {
-						if (user == null)
-							continue;
-						if (user.getUsername().equals(username)
-								&& user.getPassword().equals(password)) {
-							userExists = true;
-							break;
-						}
+				} else {
+					out.println(SIGNUP_FAILED_USERNAME_TAKEN
+							+ END_MESSAGE_DELIMETER);
+				}
+			} else if (pushedMessages.contains(LOGIN_USER)) {
+				// TODO check if user name is valid and create new user
+				String parameters = pushedMessages.split("@")[1];
+				String username = ((parameters.split("username=")[1])
+						.split(",")[0]);
+				String password = ((parameters.split("password=")[1])
+						.split(",")[0]);
+				boolean userExists = false;
+				for (User user : users) {
+					if (user == null)
+						continue;
+					if (user.getUsername().equals(username)
+							&& user.getPassword().equals(password)) {
+						userExists = true;
+						break;
 					}
-					if (userExists) {
-						out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
-						this.user = user;
-						user.setLoggedIn(userExists);
-					} else {
-						out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
-					}
-				} else if (pushedMessages.contains(GET_CHAT_PORT)) {
-					out.println(chatSocketServerPort + END_MESSAGE_DELIMETER);
-				} else if (pushedMessages.contains(END_CONNECTION)) {
-					done = true;
-				} else if (pushedMessages.contains(SHOW_USERS) && user != null) {
-					// TODO check if user is loggin
-					String result = "";
-					for (User user : users) {
-						if (user == null)
-							continue;
-						result += user + ",";
-					}
-					result = result.substring(0, result.length() - 1);
-					out.println(result + END_MESSAGE_DELIMETER);
-				} else if (pushedMessages.contains(GET_GAME_PORT)) {
-					out.println(gameSocketServerPort + END_MESSAGE_DELIMETER);
-				} else if (pushedMessages.contains(LOGOUT_USER)) {
-					out.println(LOGOUT_SUCCESS + END_MESSAGE_DELIMETER);
-				} else if (pushedMessages.contains(CREATE_GAME)) {
-					// TODO do something special: verify game can be created,
-					// switch the user to the proper chat room, create game ...
-				} else if (pushedMessages.contains(JOIN_GAME)) {
-					// TODO do something special: verify game can be Joined,
-					// switch the user to the proper chat room, create game ...
-				} //TODO rest of methods
-			} catch (Exception e) {
-				System.out.println("Gracefully dealt with error in "
-						+ getClass().getTypeName() + ",Exception"
-						+ e.getClass().getSimpleName());
-			}
+				}
+				if (userExists) {
+					out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
+					this.user = user;
+					user.setLoggedIn(userExists);
+				} else {
+					out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
+				}
+			} else if (pushedMessages.contains(GET_CHAT_PORT)) {
+				out.println(chatSocketServerPort + END_MESSAGE_DELIMETER);
+			} else if (pushedMessages.contains(END_CONNECTION)) {
+				done = true;
+			} else if (pushedMessages.contains(SHOW_USERS) && user != null) {
+				// TODO check if user is loggin
+				String result = "";
+				for (User user : users) {
+					if (user == null)
+						continue;
+					result += user + ",";
+				}
+				result = result.substring(0, result.length() - 1);
+				out.println(result + END_MESSAGE_DELIMETER);
+			} else if (pushedMessages.contains(GET_GAME_PORT)) {
+				out.println(gameSocketServerPort + END_MESSAGE_DELIMETER);
+			} else if (pushedMessages.contains(LOGOUT_USER)) {
+				out.println(LOGOUT_SUCCESS + END_MESSAGE_DELIMETER);
+			} else if (pushedMessages.contains(CREATE_GAME)) {
+				// TODO do something special: verify game can be created,
+				// switch the user to the proper chat room, create game ...
+			} else if (pushedMessages.contains(JOIN_GAME)) {
+				// TODO do something special: verify game can be Joined,
+				// switch the user to the proper chat room, create game ...
+			} else if (pushedMessages.contains(GameSocketServer.GET_PLAYERS_ONLINE)) {
+				//TODO Get all players online
+			} else if (pushedMessages.contains(GameSocketServer.GET_TOP_PLAYERS)) {
+				//TODO Get all the top players
+			} // TODO rest of methods
 		}
 
 		private boolean userExists(String username, String password) {
@@ -236,14 +234,14 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		 * 
 		 */
 		public void onGameEnd(GameEvent e) {
-			main(e.sourceGame+GameSocketServer.GAME_ENDED);
+			main(e.sourceGame + GameSocketServer.GAME_ENDED);
 		}
-		
+
 		/**
 		 * 
 		 */
 		public void onGameStart(GameEvent e) {
-			main(e.sourceGame+GameSocketServer.GAME_STARTED);
+			main(e.sourceGame + GameSocketServer.GAME_STARTED);
 		}
 
 	}
@@ -269,6 +267,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 	/**
 	 * Very BadAlgorithm; switch for dictionary related algorithm
+	 * 
 	 * @param word
 	 * @return the input word without all the bannedwords
 	 */

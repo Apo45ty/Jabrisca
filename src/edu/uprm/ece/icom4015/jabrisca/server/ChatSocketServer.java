@@ -110,7 +110,6 @@ public class ChatSocketServer extends VanillaSocketServer {
 
 		@Override
 		public void main(String pushedMessages) {
-			try {
 				System.out.println(pushedMessages);
 				if (pushedMessages.contains(LOGIN_USER)) {
 					String parameters = pushedMessages.split("@")[1];
@@ -161,11 +160,6 @@ public class ChatSocketServer extends VanillaSocketServer {
 					result = result.substring(0, result.length()-1);
 					out.println(result + END_MESSAGE_DELIMETER);
 				} //TODO add the rest of the methods
-			} catch (Exception e) {
-				System.out.println("Gracefully dealt with error in "
-						/*+ getClass().getTypeName() */+ ",Excetion"
-						+ e.getClass().getSimpleName());
-			}
 		}
 		
 		public boolean setRoom(int roomNum){
@@ -189,8 +183,5 @@ public class ChatSocketServer extends VanillaSocketServer {
 			currentUsers++;	
 		return couldAllocate;
 	}
-	
-	
-	
-	
+
 }

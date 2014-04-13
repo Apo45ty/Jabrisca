@@ -2,6 +2,8 @@ package edu.uprm.ece.icom4015.jabrisca.server;
 
 import java.net.Socket;
 
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameResults;
+
 public class User {
 	public static final int MAX_SAVED_GAMES = 10;
 	private String username;

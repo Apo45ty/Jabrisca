@@ -1,6 +1,5 @@
 package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
-import edu.uprm.ece.icom4015.jabrisca.server.GameLawEnforcer;
 
 public interface GameRoom {
 	int getNumberOfPlayers();
@@ -17,4 +16,5 @@ public interface GameRoom {
 	String getName();
 	void setName(String name);
 	void addGameListener(GameListener listener);
+	String getHand(Player player);
 }

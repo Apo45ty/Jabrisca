@@ -17,11 +17,6 @@ public class TournamentBrisca implements Game {
 		return false;
 	}
 
-	public boolean isTurnOver() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	public boolean isOver() {
 		// TODO Auto-generated method stub
 		return false;
@@ -32,12 +27,12 @@ public class TournamentBrisca implements Game {
 		
 	}
 
-	public int addPlayer() {
+	public int addPlayer(Player player) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	public String play(int seatNumber, String parameters) {
+	public String play(Player player, String parameters) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -55,6 +50,16 @@ public class TournamentBrisca implements Game {
 	public boolean hasStarted() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public boolean isRoundOver() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public String showHand(Player player) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
