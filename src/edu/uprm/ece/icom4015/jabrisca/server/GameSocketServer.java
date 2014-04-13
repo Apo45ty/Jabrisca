@@ -45,8 +45,8 @@ public class GameSocketServer implements Runnable {
 	public static final String PLAYER_DOES_NOT_POSSES_CARD = "playerDoesNotPossesCard";
 	public static final String MOVE_FAILED = MOVE+"-moveFailed";
 	public static final String MOVE_OUT_OF_TURN = MOVE+"-cantMakeThatMoveRightNow";
-	public static final String MOVE_DRAW_CARD = MOVE+"drawingCard";
-	public static final String MOVE_NEW_CARD = MOVE+"newCard";
+	public static final String MOVE_DRAW_CARD = MOVE+"-drawingCard";
+	public static final String MOVE_NEW_CARD = MOVE+"-newCard";
 	public static final String DECK_OUT_OF_CARDS = "deckOutOfCards";
 	public static final String PLAYER_CANT_SURRENDER = "playerCantSurrender";
 	public static final String SHOW_PLAYERS_HAND = "playersHandIs";
@@ -55,10 +55,11 @@ public class GameSocketServer implements Runnable {
 	public static final String SURRENDER_KEY = "surrender=";
 	public static final String TEAMS = "teams=";
 	public static final String CARD_SWAP = "cardswap=";
-	public static final String GET_PLAYERS_ONLINE = "playersOnlineYo?";
+	public static final String GET_PLAYERS_ONLINE = "playersOnlineYo";
 	public static final String GET_TOP_PLAYERS = "YoGimmeTop";
-	public static final CharSequence GET_PLAYERS_HAND = null;
-
+	public static final String GET_PLAYERS_HAND = "getHand";
+	public static final String GET_TOP_PLAYERS_SUCCESS = GET_TOP_PLAYERS+"-Success";
+	public static final String GET_PLAYERS_ONLINE_SUCCESS = GET_PLAYERS_ONLINE+"-Success";
 	/**
 	 * The constructor is an introvert and thus Here we add all the Game Law
 	 * Enforcers
@@ -191,6 +192,9 @@ public class GameSocketServer implements Runnable {
 			} else if (pushedMessages.contains(GameSocketServer.GET_PLAYERS_HAND)) {
 				//TODO	send the player his hand
 				out.println(room.getHand(player)+END_MESSAGE_DELIMETER);
+			} else if (pushedMessages.contains(GameSocketServer.GAME_ENDED)) {
+				//TODO	send the player his hand
+				out.println(pushedMessages);
 			}	 // TODO add the rest of the methods
 		}
 

@@ -39,7 +39,8 @@ public class JabriscaModel implements Runnable {
 	private int currentPlayersPosition = 0;
 	private int currentLeaderPosition;
 	public final int MAX_LEADER_RESULTS = MAX_PLAYERS_RESULTS;
-
+	public static final String WAIT_TIME_OUT = "messageTimedOut";
+	
 	public JabriscaModel(BlockingQueue instructions) {
 		this(null, null, null, null, null, instructions);
 	}
@@ -112,33 +113,36 @@ public class JabriscaModel implements Runnable {
 						break;
 					case lobby:
 						if (instruction.contains("windowOpened")) {
-							//TODO Populate lobby with data
-							String result = sendMessageToSomeSocket(ChatSocketServer.LOGIN_USER, "", chatSocket);
-							System.out.println("Fetched the following stuff:"+result);
-							if(result.contains(ChatSocketServer.LOGIN_SUCCESS)){
-								updateChat_Lobby("Jabrisca","Welcome!");
-							} else if(result.contains(ChatSocketServer.LOGIN_FAIL)){
-								updateChat_Lobby("Jabrisca","Error login into chat!");
-								JOptionPane.showMessageDialog(currentWindow, result);
+							// TODO Populate lobby with data
+							String result = sendMessageToSomeSocket(
+									ChatSocketServer.LOGIN_USER, "", chatSocket);
+							System.out.println("Fetched the following stuff:"
+									+ result);
+							if (result.contains(ChatSocketServer.LOGIN_SUCCESS)) {
+								updateChat_Lobby("Jabrisca", "Welcome!");
+							} else if (result
+									.contains(ChatSocketServer.LOGIN_FAIL)) {
+								updateChat_Lobby("Jabrisca",
+										"Error login into chat!");
+								JOptionPane.showMessageDialog(currentWindow,
+										result);
 							}
-							
-							loadTopPlayers(currentPlayersPosition,
-									currentPlayersPosition
-											+ MAX_PLAYERS_RESULTS);
+
+							loadPlayers(currentPlayersPosition,
+									MAX_PLAYERS_RESULTS);
 							loadLeaderboard(currentLeaderPosition,
-									currentLeaderPosition + MAX_LEADER_RESULTS);
+									MAX_LEADER_RESULTS);
 						} else if (instruction.equals("games_create")) {
 							// Show the user the create game window
 							transitionToState(ModelStates.newgame);
 						} else if (instruction.equals("players_load")) {
 							// TODO load more player data
-							loadTopPlayers(currentPlayersPosition,
-									currentPlayersPosition
-											+ MAX_PLAYERS_RESULTS);
+							loadPlayers(currentPlayersPosition,
+									MAX_PLAYERS_RESULTS);
 						} else if (instruction.equals("leaderBoards_load")) {
 							// TODO load more leaderBoards data
 							loadLeaderboard(currentLeaderPosition,
-									currentLeaderPosition + MAX_LEADER_RESULTS);
+									MAX_LEADER_RESULTS);
 						} else if (instruction.equals("lobbyChat_send")) {
 							// TODO Fetch message and send it to the chat server
 							sendMessageToChat_Lobby();
@@ -185,11 +189,11 @@ public class JabriscaModel implements Runnable {
 									// TODO user did not click yes
 								}
 							}
-						} else if(instruction.contains(CHAT_SOCKET)){
-							if(instruction.contains(ChatSocketServer.MESSAGE)){
+						} else if (instruction.contains(CHAT_SOCKET)) {
+							if (instruction.contains(ChatSocketServer.MESSAGE)) {
 								String parameters = instruction.split("@")[1];
-								String username = ((parameters.split("username=")[1])
-										.split(",")[0]);
+								String username = ((parameters
+										.split("username=")[1]).split(",")[0]);
 								String message = ((parameters.split("message=")[1])
 										.split(",")[0]);
 								updateChat_Lobby(username, message);
@@ -223,7 +227,14 @@ public class JabriscaModel implements Runnable {
 							transitionToState(ModelStates.endgame);
 						} else if (instruction.equals("boardChat_send")) {
 							// TODO Tell the user the number of cards remaining
-							sendMessageToChat_GameBoard();
+							if (instruction.contains(ChatSocketServer.MESSAGE)) {
+								String parameters = instruction.split("@")[1];
+								String username = ((parameters
+										.split("username=")[1]).split(",")[0]);
+								String message = ((parameters.split("message=")[1])
+										.split(",")[0]);
+								updateChat_GameBoard(username, message);
+							}
 						} else if (instruction
 								.equals("mouseClicked-boardGame_deck")) {
 							// TODO Tell the user the number of cards remaining
@@ -252,9 +263,10 @@ public class JabriscaModel implements Runnable {
 						} else if (instruction.equals("options_blackHand")) {
 							// TODO try to tell the server the user has the
 							// black hand and has won
-							int temp = JOptionPane.showConfirmDialog(currentWindow,
-									"Are you sure you want to play the blackhand?");
-							if(temp == JOptionPane.YES_OPTION){
+							int temp = JOptionPane
+									.showConfirmDialog(currentWindow,
+											"Are you sure you want to play the blackhand?");
+							if (temp == JOptionPane.YES_OPTION) {
 								String result = sendMessageToSomeSocket(
 										GameSocketServer.PLAYER_PLAYED_BLACKHAND,
 										"", gameSocket);
@@ -263,10 +275,11 @@ public class JabriscaModel implements Runnable {
 									// TODO playerWon
 								} else if (result
 										.contains(GameSocketServer.PLAYER_CANT_BLACKHAND)) {
-									// TODO tell the user he cant play black card
+									// TODO tell the user he cant play black
+									// card
 								}
 							}
-							
+
 						} else if (instruction
 								.contains("mouseClicked-boardGame_myCard")) {
 							// TODO getsocket and Game logic stuff
@@ -301,6 +314,15 @@ public class JabriscaModel implements Runnable {
 									// Animation could not be played
 								}
 							}
+						} else if (instruction.contains(CHAT_SOCKET)) {
+							if (instruction.contains(ChatSocketServer.MESSAGE)) {
+								String parameters = instruction.split("@")[1];
+								String username = ((parameters
+										.split("username=")[1]).split(",")[0]);
+								String message = ((parameters.split("message=")[1])
+										.split(",")[0]);
+								updateChat_GameBoard(username, message);
+							}
 						}
 						break;
 					case endgame:
@@ -324,10 +346,10 @@ public class JabriscaModel implements Runnable {
 								// Fetch the game parameters for the next game
 								// in the tournament
 								sendMessageToSomeSocket(
-										GameSocketServer.PLAYER_CONTINUED,
-										"", gameSocket);
+										GameSocketServer.PLAYER_CONTINUED, "",
+										gameSocket);
 							} else if (result
-									.contains(GameSocketServer.PLAYER_CANT_CONTINUE_TRUE))  {
+									.contains(GameSocketServer.PLAYER_CANT_CONTINUE_TRUE)) {
 								// TODO if game is not in tournament mode
 								// continue to the lobby
 								transitionToState(ModelStates.lobby);
@@ -345,7 +367,9 @@ public class JabriscaModel implements Runnable {
 					} else if (instruction.equals("reconnect")) {
 						setState(ModelStates.loginsingup);
 						attempConnection();
-					} 
+					} else if(instruction.contains(WAIT_TIME_OUT)){
+						//TODO
+					}
 				} catch (Exception e) {
 					String output = "Unexpected minor error, gracefully dealing with it in "
 							+ getClass().getSimpleName()
@@ -366,48 +390,58 @@ public class JabriscaModel implements Runnable {
 
 	}
 
+
 	/**
 	 * @param username
 	 * @param message
 	 */
 	private void updateChat_Lobby(String username, String message) {
-		JTextArea display = (JTextArea)lobby.fetchComponent(null, "lobbyChat_display");
-		display.setText(display.getText()+
-				"\n"+
-				username+":"+message);
+		lobby.fetchComponentAndAddValueJTextArea(null,"lobbyChat_display","\n" + username + ":" + message);
 	}
 
-	private void sendMessageToChat_GameBoard() {
-		// TODO Fetch all the 
+	private void updateChat_GameBoard(String username, String message) {
+		gameboard.fetchComponentAndAddValueJTextArea(null,"lobbyChat_display","\n" + username + ":" + message);
 	}
 
 	private void createGameRoom() {
 		// TODO Auto-generated method stub
-		//sendMessageToSomeSocket(ManagerSocketServer.CREATE_GAME, parameters);
-		gameSocket = new SocketClient(hostURL, chatPort, instructions,
-				GAME_SOCKET);
+		// sendMessageToSomeSocket(ManagerSocketServer.CREATE_GAME, parameters);
+		gameSocket = gameSocket == null ? new SocketClient(hostURL, chatPort,
+				instructions, GAME_SOCKET) : gameSocket;
+		sendMessageToServer(ManagerSocketServer.CREATE_GAME);
+		sendMessageToSomeSocket(GameSocketServer.LOGIN_USER, "", gameSocket);
 	}
 
 	private void sendMessageToChat_Lobby() {
 		// TODO Auto-generated method stub
-
+		String message = lobby.fetchJTextValue("lobbyChat_message");
+		sendMessageToSomeSocket(ChatSocketServer.MESSAGE, "message=" + message,
+				chatSocket);
 	}
 
-	private void loadLeaderboard(int currentPlayersPosition2, int i) {
+	private void loadLeaderboard(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
-
+		lobby.setStatus("Loading Leaderboards");
+		String result = sendMessageToServer(GameSocketServer.GET_TOP_PLAYERS, "startAt="
+				+ currentPlayersPosition + ",quantity=" + quantity);
+		if(result.contains(GameSocketServer.GET_TOP_PLAYERS_SUCCESS)){
+			
+		}
 	}
 
-	private void loadTopPlayers(int i, int mAX_PLAYERS_RESULTS2) {
+	private void loadPlayers(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
-
+		lobby.setStatus("Loading Players");
+		String result = sendMessageToServer(GameSocketServer.GET_PLAYERS_ONLINE, "startAt="
+				+ currentPlayersPosition + ",quantity=" + quantity);
+		if(result.contains(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS)){
+			
+		}
 	}
 
 	/**
 	 * Same as sendMessageToServer(String message,String extraParameters)
-	 * 
-	 * @param message
-	 *            to be sen
+	 * @param message to be send
 	 * @return
 	 */
 	private String sendMessageToServer(String message) {
@@ -459,7 +493,8 @@ public class JabriscaModel implements Runnable {
 	 */
 	private void transitionToState(ModelStates nextState)
 			throws IllegalStateException {
-		//TODO Actually implements this method fetch the value of the parameters for the next state
+		// TODO Actually implements this method fetch the value of the
+		// parameters for the next state
 		Object[] stateParameters = { "Username", "Password", false, true, true,
 				false, false, "MoveCardAnimation", null, 0 };
 		// Map all posible transitions

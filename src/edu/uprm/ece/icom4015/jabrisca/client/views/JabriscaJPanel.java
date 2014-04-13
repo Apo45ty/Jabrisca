@@ -221,6 +221,12 @@ public abstract class JabriscaJPanel extends JFrame{
 		progressBar.setValue(i);
 		progressBar.setStringPainted(true);
 	}
+
+	public void fetchComponentAndAddValueJTextArea(Container object,
+			String name, String message) {
+		JTextArea display = (JTextArea)(fetchComponent(object, name));
+		display.setText(display.getText() + message);
+	}
 	
 	
 }

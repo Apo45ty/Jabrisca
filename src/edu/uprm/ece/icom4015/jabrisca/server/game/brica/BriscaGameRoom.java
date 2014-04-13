@@ -339,7 +339,6 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 
 		/**
 		 * Generate the proper game
-		 * 
 		 * @param briscaGameFactory
 		 * @param parameters
 		 * @return

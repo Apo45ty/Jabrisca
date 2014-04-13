@@ -1,11 +1,17 @@
 package edu.uprm.ece.icom4015.jabrisca.server;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import javax.swing.Timer;
+
+import edu.uprm.ece.icom4015.jabrisca.client.JabriscaModel;
 
 public abstract class VanillaSocketThread implements Runnable {
 	private Socket socket;
@@ -48,8 +54,10 @@ public abstract class VanillaSocketThread implements Runnable {
 				String input = "";
 				input = in.readLine();
 				if (waitingForResponse && input != null && input.length() > 0) {
-					while(!input.contains(ManagerSocketServer.END_MESSAGE_DELIMETER)){
-						input+=in.readLine();
+					if(!input.contains(ManagerSocketServer.END_MESSAGE_DELIMETER)){
+						while(!input.contains(ManagerSocketServer.END_MESSAGE_DELIMETER)){
+							input+=in.readLine();
+						}
 					}
 					waitingForResponse = false;
 					response = input;
@@ -59,8 +67,9 @@ public abstract class VanillaSocketThread implements Runnable {
 			}
 		} catch(java.net.SocketException e){
 			e.printStackTrace();
-		} catch (Exception e) {
-		
+		}  catch(NullPointerException e){
+			e.printStackTrace();
+		} catch (Exception e) {		
 			System.out.println("Gracefully dealt with error in "
 					+ getClass().getTypeName() + ",Excetion" + e.getMessage());
 		} finally {
@@ -96,8 +105,17 @@ public abstract class VanillaSocketThread implements Runnable {
 	 */
 	public String sendMessageWaitResponse(String message) {
 		waitingForResponse = true;
-		out.println(message);
+		final Timer timeout = new Timer(1000,new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(waitingForResponse){
+					response = JabriscaModel.WAIT_TIME_OUT;
+					waitingForResponse= false;
+				}
+			}
+		});
+		timeout.start();
 		while (waitingForResponse){
+			out.println(message);
 		}
 		return response;
 	}

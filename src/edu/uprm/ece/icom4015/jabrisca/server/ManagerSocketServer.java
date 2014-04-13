@@ -128,6 +128,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 	class MainSocketThread extends VanillaSocketThread implements GameListener {
 
+		
 		private User user;
 
 		public MainSocketThread(Socket socket) {
@@ -176,12 +177,12 @@ public class ManagerSocketServer extends VanillaSocketServer {
 					if (user.getUsername().equals(username)
 							&& user.getPassword().equals(password)) {
 						userExists = true;
+						this.user = user;
 						break;
 					}
 				}
 				if (userExists) {
 					out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
-					this.user = user;
 					user.setLoggedIn(userExists);
 				} else {
 					out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
@@ -212,8 +213,10 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				// switch the user to the proper chat room, create game ...
 			} else if (pushedMessages.contains(GameSocketServer.GET_PLAYERS_ONLINE)) {
 				//TODO Get all players online
+				out.println(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS+"@users="+users);
 			} else if (pushedMessages.contains(GameSocketServer.GET_TOP_PLAYERS)) {
 				//TODO Get all the top players
+				out.println(GameSocketServer.GET_TOP_PLAYERS_SUCCESS+"@users="+users);
 			} // TODO rest of methods
 		}
 
