@@ -1,5 +1,7 @@
 package edu.uprm.ece.icom4015.jabrisca.client.views;
 
+import javax.swing.JMenuItem;
+
 import edu.uprm.ece.icom4015.jabrisca.client.JabriscaController;
 
 /**
@@ -8,6 +10,7 @@ import edu.uprm.ece.icom4015.jabrisca.client.JabriscaController;
  */
 public class Lobby extends JabriscaJPanel {
 
+	
 	/**
 	 * Creates new form Lobby
 	 */
@@ -67,7 +70,8 @@ public class Lobby extends JabriscaJPanel {
 		jMenuItem1 = new javax.swing.JMenuItem();
 		jMenuItem2 = new javax.swing.JMenuItem();
 		jMenuItem3 = new javax.swing.JMenuItem();
-
+		jMenuItem4 = new javax.swing.JMenuItem();
+		
 		setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 		setPreferredSize(new java.awt.Dimension(876, 640));
 
@@ -268,6 +272,10 @@ public class Lobby extends JabriscaJPanel {
 		jMenuItem3.setText("My Scores");
 		jMenuItem3.setName("myScores"); // NOI18N
 		jMenu1.add(jMenuItem3);
+		jMenuItem4.setText("Reload Games");
+		jMenuItem4.setName("reloadGames"); // NOI18N
+		jMenu1.add(jMenuItem4);
+		
 
 		jMenuBar1.add(jMenu1);
 
@@ -327,6 +335,7 @@ public class Lobby extends JabriscaJPanel {
 	}
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
+	private javax.swing.JMenuItem jMenuItem4;
 	private javax.swing.JButton jButton1;
 	private javax.swing.JButton jButton2;
 	private javax.swing.JButton jButton3;

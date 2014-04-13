@@ -18,7 +18,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static int managerSocketServerPort = 6767;
 	public static GameSocketServer gameServer;
 	public static ChatSocketServer chatServer;
-	private String[] badWords = { "cabron", "pendejo", "popo", "puta" };
+	private String[] badWords = { "cabron", "pendejo", "popo", "puta" ,"cago","jodienda","joder"};
 	public static BlockingDeque bannedWords = new LinkedBlockingDeque();
 	public static int currentUsers = 0;
 	// Verbs
@@ -208,11 +208,23 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			} else if (pushedMessages.contains(CREATE_GAME)) {
 				// TODO do something special: verify game can be created,
 				// switch the user to the proper chat room, create game ...
+				String parameters = pushedMessages.split("@")[1];
+				out.println(GameSocketServer.createGame(parameters, user));
 			} else if (pushedMessages.contains(JOIN_GAME)) {
 				// TODO do something special: verify game can be Joined,
 				// switch the user to the proper chat room, create game ...
+				String parameters = pushedMessages.split("@")[1];
+				String roomName = ((parameters.split("roomname=")[1])
+						.split(",")[0]);
+				int result = GameSocketServer.addUser(roomName, user);
+				if(result>=0){
+					out.println(GameSocketServer.PLAYER_JOINED_ROOM);
+				} else {
+					out.println(GameSocketServer.PLAYER_CANT_JOINED_ROOM);
+				}
 			} else if (pushedMessages.contains(GameSocketServer.GET_PLAYERS_ONLINE)) {
 				//TODO Get all players online
+				//for()
 				out.println(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS+"@users="+users);
 			} else if (pushedMessages.contains(GameSocketServer.GET_TOP_PLAYERS)) {
 				//TODO Get all the top players

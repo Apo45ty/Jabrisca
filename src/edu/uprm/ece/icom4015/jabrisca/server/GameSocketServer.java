@@ -60,6 +60,9 @@ public class GameSocketServer implements Runnable {
 	public static final String GET_PLAYERS_HAND = "getHand";
 	public static final String GET_TOP_PLAYERS_SUCCESS = GET_TOP_PLAYERS+"-Success";
 	public static final String GET_PLAYERS_ONLINE_SUCCESS = GET_PLAYERS_ONLINE+"-Success";
+	public static final String PLAYER_JOINED_ROOM = "playerJoinedRoom";
+	public static final String PLAYER_CANT_JOINED_ROOM = "playerCantJoinRoom";
+	
 	/**
 	 * The constructor is an introvert and thus Here we add all the Game Law
 	 * Enforcers

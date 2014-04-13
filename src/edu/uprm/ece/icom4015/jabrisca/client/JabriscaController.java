@@ -231,7 +231,7 @@ public class JabriscaController implements ActionListener, KeyListener,
 	 * JTextArea leaderBoards_load, JButton lobbyChat_display, JTextArea
 	 * lobbyChat_message, JTextArea lobbyChat_send, JButton games_create,
 	 * JButton games_table, JTable options_logout, JMenuItem options_myScores,
-	 * JMenuItem howToPlay, JMenuItem games_table, JTable
+	 * JMenuItem howToPlay, JMenuItem games_table, JTable reloadGames,JMenuItem
 	 */
 
 	/*

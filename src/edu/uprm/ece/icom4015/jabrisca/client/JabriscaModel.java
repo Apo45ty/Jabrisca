@@ -32,15 +32,15 @@ public class JabriscaModel implements Runnable {
 	private final int mainPort = ManagerSocketServer.managerSocketServerPort;
 	private int chatPort = ManagerSocketServer.chatSocketServerPort;
 	private int gamePort = ManagerSocketServer.gameSocketServerPort;
-	private VanillaSocketThread mainSocket;
-	private VanillaSocketThread chatSocket;
-	private VanillaSocketThread gameSocket;
+	private SocketClient mainSocket;
+	private SocketClient chatSocket;
+	private SocketClient gameSocket;
 	private final int MAX_PLAYERS_RESULTS = 10;
 	private int currentPlayersPosition = 0;
 	private int currentLeaderPosition;
 	public final int MAX_LEADER_RESULTS = MAX_PLAYERS_RESULTS;
 	public static final String WAIT_TIME_OUT = "messageTimedOut";
-	
+	public static final String LOG_FILTER = MANAGER_SOCKET;
 	public JabriscaModel(BlockingQueue instructions) {
 		this(null, null, null, null, null, instructions);
 	}
@@ -71,7 +71,7 @@ public class JabriscaModel implements Runnable {
 						e.printStackTrace();
 					}
 
-					if (logginEnabled) {
+					if (logginEnabled&&instructions.contains(LOG_FILTER)) {
 						System.out.println("Status:\n" + state + "\n"
 								+ instruction);
 					}
@@ -89,7 +89,7 @@ public class JabriscaModel implements Runnable {
 							else {
 								// TODO handle exception
 								JOptionPane.showMessageDialog(currentWindow,
-										"Error Loginin. Error:" + result);
+										"Error Login in. Error:" + result);
 							}
 						} else if (instruction.equals("mouseClicked-jabrisca")) {//
 							if (loginsingup instanceof AnimatedJabriscaJPanel) {
@@ -116,8 +116,7 @@ public class JabriscaModel implements Runnable {
 							// TODO Populate lobby with data
 							String result = sendMessageToSomeSocket(
 									ChatSocketServer.LOGIN_USER, "", chatSocket);
-							System.out.println("Fetched the following stuff:"
-									+ result);
+							System.out.println(result);
 							if (result.contains(ChatSocketServer.LOGIN_SUCCESS)) {
 								updateChat_Lobby("Jabrisca", "Welcome!");
 							} else if (result
@@ -132,6 +131,7 @@ public class JabriscaModel implements Runnable {
 									MAX_PLAYERS_RESULTS);
 							loadLeaderboard(currentLeaderPosition,
 									MAX_LEADER_RESULTS);
+							loadRooms();
 						} else if (instruction.equals("games_create")) {
 							// Show the user the create game window
 							transitionToState(ModelStates.newgame);
@@ -146,6 +146,10 @@ public class JabriscaModel implements Runnable {
 						} else if (instruction.equals("lobbyChat_send")) {
 							// TODO Fetch message and send it to the chat server
 							sendMessageToChat_Lobby();
+						} else if (instruction.equals("reloadGames")) {
+							// TODO Fetch the playable games rooms and display
+							// them on the table
+							loadRooms();
 						} else if (instruction.equals("options_myScores")) {
 							// TODO fetch all the scores from the user and
 							// present
@@ -198,6 +202,17 @@ public class JabriscaModel implements Runnable {
 										.split(",")[0]);
 								updateChat_Lobby(username, message);
 							}
+						} else if (instruction.contains(MANAGER_SOCKET)) {
+							// TODO
+							if (instruction
+									.contains(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS)) {
+								String parameters = instruction.split("@")[1];
+								updatePlayers(parameters);
+							} else if (instruction
+									.contains(GameSocketServer.GET_TOP_PLAYERS_SUCCESS)) {
+								String parameters = instruction.split("@")[1];
+								updateLeaderboard(parameters);
+							}
 						}
 						break;
 					case newgame:
@@ -245,13 +260,16 @@ public class JabriscaModel implements Runnable {
 							// Get Card Name
 							String[] options = new String[] { "Card 1",
 									"Card 2", "Card 3", "Cancel" };
-							JOptionPane.showOptionDialog(currentWindow,
+							int cardValue = JOptionPane.showOptionDialog(currentWindow,
 									"TradeCard", "Select a card to trade.",
 									JOptionPane.DEFAULT_OPTION,
 									JOptionPane.PLAIN_MESSAGE, null, options,
 									options[0]);
+							if(cardValue==3){
+								continue;//Continue Loop
+							}
 							String result = sendMessageToSomeSocket(
-									GameSocketServer.PLAYER_TRADEDCARD, "",
+									GameSocketServer.PLAYER_TRADEDCARD, "cardNumber="+cardValue,
 									gameSocket);
 							if (result
 									.contains(GameSocketServer.PLAYER_CAN_TRADE_CARD)) {
@@ -304,6 +322,7 @@ public class JabriscaModel implements Runnable {
 								// get the seat assigned to the player by server
 								int playerSeat = (Integer) state
 										.getStateParameterValue("playerSeat");
+									
 								String destination = "boardGame_player"
 										+ (playerSeat + 1) + "Card";
 
@@ -326,11 +345,17 @@ public class JabriscaModel implements Runnable {
 						}
 						break;
 					case endgame:
-						if (instruction.contains("surrender")) {
+						if (instruction.contains("windowOpened")) {
+							//TODO fetch game state
+						} else if (instruction.contains("surrender")) {
 							// TODO tell the server
-							sendMessageToSomeSocket(
+							String result = sendMessageToSomeSocket(
 									GameSocketServer.PLAYER_SURRENDER, "",
 									gameSocket);
+							if (result
+									.contains(GameSocketServer.PLAYER_CANT_SURRENDER)) {
+								// TODO handle player cant surrender
+							}
 							transitionToState(ModelStates.lobby);
 						} else if (instruction
 								.contains("windowClosed-EndGameWindow")) {
@@ -367,8 +392,8 @@ public class JabriscaModel implements Runnable {
 					} else if (instruction.equals("reconnect")) {
 						setState(ModelStates.loginsingup);
 						attempConnection();
-					} else if(instruction.contains(WAIT_TIME_OUT)){
-						//TODO
+					} else if (instruction.contains(WAIT_TIME_OUT)) {
+						// TODO
 					}
 				} catch (Exception e) {
 					String output = "Unexpected minor error, gracefully dealing with it in "
@@ -390,17 +415,38 @@ public class JabriscaModel implements Runnable {
 
 	}
 
+	private void loadRooms() {
+		// TODO Auto-generated method stub
+		// rooms=room1{key1:value;key2:value...},room1{key1:value;key2:value...}
+
+	}
+
+	private void updateLeaderboard(String parameters) {
+		// TODO Auto-generated method stub
+		String users = ((parameters.split("users=")[1]).split(",")[0]);
+		lobby.fetchComponentAndAddValueJTextArea(null, "leaderBoards_display",
+				users, true);
+	}
+
+	private void updatePlayers(String parameters) {
+		// TODO Auto-generated method stub
+		String users = ((parameters.split("users=")[1]).split(",")[0]);
+		lobby.fetchComponentAndAddValueJTextArea(null, "players_display",
+				users, true);
+	}
 
 	/**
 	 * @param username
 	 * @param message
 	 */
 	private void updateChat_Lobby(String username, String message) {
-		lobby.fetchComponentAndAddValueJTextArea(null,"lobbyChat_display","\n" + username + ":" + message);
+		lobby.fetchComponentAndAddValueJTextArea(null, "lobbyChat_display",
+				"\n" + username + ":" + message);
 	}
 
 	private void updateChat_GameBoard(String username, String message) {
-		gameboard.fetchComponentAndAddValueJTextArea(null,"lobbyChat_display","\n" + username + ":" + message);
+		gameboard.fetchComponentAndAddValueJTextArea(null, "lobbyChat_display",
+				"\n" + username + ":" + message);
 	}
 
 	private void createGameRoom() {
@@ -422,26 +468,31 @@ public class JabriscaModel implements Runnable {
 	private void loadLeaderboard(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
 		lobby.setStatus("Loading Leaderboards");
-		String result = sendMessageToServer(GameSocketServer.GET_TOP_PLAYERS, "startAt="
-				+ currentPlayersPosition + ",quantity=" + quantity);
-		if(result.contains(GameSocketServer.GET_TOP_PLAYERS_SUCCESS)){
-			
+		String result = sendMessageToServer(GameSocketServer.GET_TOP_PLAYERS,
+				"startAt=" + currentPlayersPosition + ",quantity=" + quantity);
+		if (result.contains(GameSocketServer.GET_TOP_PLAYERS_SUCCESS)) {
+			String parameters = result.split("@")[1];
+			updateLeaderboard(parameters);
 		}
 	}
 
 	private void loadPlayers(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
 		lobby.setStatus("Loading Players");
-		String result = sendMessageToServer(GameSocketServer.GET_PLAYERS_ONLINE, "startAt="
-				+ currentPlayersPosition + ",quantity=" + quantity);
-		if(result.contains(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS)){
-			
+		String result = sendMessageToServer(
+				GameSocketServer.GET_PLAYERS_ONLINE, "startAt="
+						+ currentPlayersPosition + ",quantity=" + quantity);
+		if (result.contains(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS)) {
+			String parameters = result.split("@")[1];
+			updatePlayers(parameters);
 		}
 	}
 
 	/**
 	 * Same as sendMessageToServer(String message,String extraParameters)
-	 * @param message to be send
+	 * 
+	 * @param message
+	 *            to be send
 	 * @return
 	 */
 	private String sendMessageToServer(String message) {
@@ -495,8 +546,7 @@ public class JabriscaModel implements Runnable {
 			throws IllegalStateException {
 		// TODO Actually implements this method fetch the value of the
 		// parameters for the next state
-		Object[] stateParameters = { "Username", "Password", false, true, true,
-				false, false, "MoveCardAnimation", null, 0 };
+		Object[] stateParameters = state.getStateParametersValues();
 		// Map all posible transitions
 		switch (state) {
 		case loginsingup:
@@ -559,7 +609,8 @@ public class JabriscaModel implements Runnable {
 			break;
 		}
 		setState(nextState);
-		state.setStateParameterValues(stateParameters);
+		if (stateParameters != null)
+			state.setStateParameterValues(stateParameters);
 	}
 
 	/**
@@ -849,6 +900,29 @@ public class JabriscaModel implements Runnable {
 				return null;
 			} // else return the found card if so
 			return parameterValues[index];
+		}
+		/**
+		 * get a specific parameter
+		 * 
+		 * @param key
+		 * @return
+		 */
+		public Object setStateParameterValue(String key,Object value) {
+			int index = -1;
+			for (int i = 0; i < parameterKeys.length; i++) {
+				if (key.equals(parameterKeys[i])) {
+					index = i;
+					break; // exit loop
+				}
+			}
+
+			// Check if card could be found
+			if (index < 0) {
+				return null;
+			} // else return the found card if so
+			Object result =parameterValues[index];
+			parameterValues[index] = value;
+			return result;
 		}
 
 		/**
