@@ -41,6 +41,7 @@ public class JabriscaModel implements Runnable {
 	public final int MAX_LEADER_RESULTS = MAX_PLAYERS_RESULTS;
 	public static final String WAIT_TIME_OUT = "messageTimedOut";
 	public static final String LOG_FILTER = MANAGER_SOCKET;
+
 	public JabriscaModel(BlockingQueue instructions) {
 		this(null, null, null, null, null, instructions);
 	}
@@ -71,7 +72,7 @@ public class JabriscaModel implements Runnable {
 						e.printStackTrace();
 					}
 
-					if (logginEnabled&&instructions.contains(LOG_FILTER)) {
+					if (logginEnabled && instructions.contains(LOG_FILTER)) {
 						System.out.println("Status:\n" + state + "\n"
 								+ instruction);
 					}
@@ -260,17 +261,18 @@ public class JabriscaModel implements Runnable {
 							// Get Card Name
 							String[] options = new String[] { "Card 1",
 									"Card 2", "Card 3", "Cancel" };
-							int cardValue = JOptionPane.showOptionDialog(currentWindow,
-									"TradeCard", "Select a card to trade.",
+							int cardValue = JOptionPane.showOptionDialog(
+									currentWindow, "TradeCard",
+									"Select a card to trade.",
 									JOptionPane.DEFAULT_OPTION,
 									JOptionPane.PLAIN_MESSAGE, null, options,
 									options[0]);
-							if(cardValue==3){
-								continue;//Continue Loop
+							if (cardValue == 3) {
+								continue;// Continue Loop
 							}
 							String result = sendMessageToSomeSocket(
-									GameSocketServer.PLAYER_TRADEDCARD, "cardNumber="+cardValue,
-									gameSocket);
+									GameSocketServer.PLAYER_TRADEDCARD,
+									"cardNumber=" + cardValue, gameSocket);
 							if (result
 									.contains(GameSocketServer.PLAYER_CAN_TRADE_CARD)) {
 								// TODO tradecard
@@ -322,7 +324,7 @@ public class JabriscaModel implements Runnable {
 								// get the seat assigned to the player by server
 								int playerSeat = (Integer) state
 										.getStateParameterValue("playerSeat");
-									
+
 								String destination = "boardGame_player"
 										+ (playerSeat + 1) + "Card";
 
@@ -346,7 +348,7 @@ public class JabriscaModel implements Runnable {
 						break;
 					case endgame:
 						if (instruction.contains("windowOpened")) {
-							//TODO fetch game state
+							// TODO fetch game state
 						} else if (instruction.contains("surrender")) {
 							// TODO tell the server
 							String result = sendMessageToSomeSocket(
@@ -809,7 +811,10 @@ public class JabriscaModel implements Runnable {
 						"onGameStartCardSwap", "surrenderEnabled",
 						"timeLimitOnTurns", "inTournamentMode",
 						"playCardAnimationName", "playCardAnimationParameters",
-						"playerSeat"
+						"playerSeat", "boardGame_myCard1_icon",
+						"boardGame_myCard2_icon", "boardGame_myCard3_icon",
+						"boardGame_player1Card", "boardGame_player2Card",
+						"boardGame_player3Card", "boardGame_player4Card"
 				// number given to the player by the server to that is the
 				// players original position in the first play or his "seat" in
 				// the game
@@ -901,13 +906,14 @@ public class JabriscaModel implements Runnable {
 			} // else return the found card if so
 			return parameterValues[index];
 		}
+
 		/**
 		 * get a specific parameter
 		 * 
 		 * @param key
 		 * @return
 		 */
-		public Object setStateParameterValue(String key,Object value) {
+		public Object setStateParameterValue(String key, Object value) {
 			int index = -1;
 			for (int i = 0; i < parameterKeys.length; i++) {
 				if (key.equals(parameterKeys[i])) {
@@ -920,7 +926,7 @@ public class JabriscaModel implements Runnable {
 			if (index < 0) {
 				return null;
 			} // else return the found card if so
-			Object result =parameterValues[index];
+			Object result = parameterValues[index];
 			parameterValues[index] = value;
 			return result;
 		}
