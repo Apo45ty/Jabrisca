@@ -3,6 +3,7 @@ package edu.uprm.ece.icom4015.jabrisca.client.views;
 import java.awt.Component;
 import java.awt.Container;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -59,7 +60,10 @@ public abstract class JabriscaJPanel extends JFrame {
 		this.setName(this.getClass().getName());
 		this.addWindowListener(listener);
 	}
-
+	
+	/**
+	 * 
+	 */
 	abstract void initComponents();
 
 	/**
@@ -117,7 +121,6 @@ public abstract class JabriscaJPanel extends JFrame {
 
 	/**
 	 * Add the controller to the menu if this frame has any any
-	 * 
 	 * @param listener2
 	 * @param container
 	 */
@@ -135,7 +138,6 @@ public abstract class JabriscaJPanel extends JFrame {
 
 	/**
 	 * add the listener to all other subclasses
-	 * 
 	 * @param listener
 	 */
 	private void setJabriscaControllerBody(JabriscaController listener,
@@ -224,12 +226,20 @@ public abstract class JabriscaJPanel extends JFrame {
 		}
 		return result;
 	}
-
+	
+	/**
+	 * 
+	 * @param string
+	 */
 	public void setStatus(String string) {
 		JLabel statusLabel = (JLabel) fetchComponent(null, "statusBar_status");
 		statusLabel.setText(string);
 	}
-
+	
+	/**
+	 * 
+	 * @param i
+	 */
 	public void setProgressBar(int i) {
 		JProgressBar progressBar = (JProgressBar) fetchComponent(null,
 				"statusBar_progressBar");
@@ -238,12 +248,25 @@ public abstract class JabriscaJPanel extends JFrame {
 		progressBar.setValue(i);
 		progressBar.setStringPainted(true);
 	}
-
+	
+	/**
+	 * 
+	 * @param object
+	 * @param name
+	 * @param message
+	 */
 	public void fetchComponentAndAddValueJTextArea(Container object,
 			String name, String message) {
 		fetchComponentAndAddValueJTextArea(object, name, message, false);
 	}
-
+	
+	/**
+	 * 
+	 * @param object
+	 * @param name
+	 * @param message
+	 * @param shouldOverwrite
+	 */
 	public void fetchComponentAndAddValueJTextArea(Container object, String name,
 			String message, boolean shouldOverwrite) {
 		// TODO Auto-generated method stub
@@ -255,5 +278,16 @@ public abstract class JabriscaJPanel extends JFrame {
 			display.setText(message);
 		}
 	}
-
+	/**
+	 * 
+	 * @param name
+	 * @param icon
+	 */
+	public void setImageIcon(String name,ImageIcon icon){
+		Component comp =  fetchComponent(null, name);
+		if(comp instanceof JLabel){
+			JLabel label = (JLabel)comp;
+			label.setIcon(icon);
+		}
+	}
 }

@@ -95,7 +95,7 @@ public class JabriscaModel implements Runnable {
 						} else if (instruction.equals("mouseClicked-jabrisca")) {//
 							if (loginsingup instanceof AnimatedJabriscaJPanel) {
 								// TODO animate login screen
-
+								
 							}//
 						} else if (instruction.equals("singup")) {//
 							// TODO use socket client to sign user in the server
@@ -417,19 +417,30 @@ public class JabriscaModel implements Runnable {
 
 	}
 
+	/**
+	 * 
+	 */
 	private void loadRooms() {
 		// TODO Auto-generated method stub
 		// rooms=room1{key1:value;key2:value...},room1{key1:value;key2:value...}
 
 	}
-
+	
+	/**
+	 * 
+	 * @param parameters
+	 */
 	private void updateLeaderboard(String parameters) {
 		// TODO Auto-generated method stub
 		String users = ((parameters.split("users=")[1]).split(",")[0]);
 		lobby.fetchComponentAndAddValueJTextArea(null, "leaderBoards_display",
 				users, true);
 	}
-
+	
+	/**
+	 * 
+	 * @param parameters
+	 */
 	private void updatePlayers(String parameters) {
 		// TODO Auto-generated method stub
 		String users = ((parameters.split("users=")[1]).split(",")[0]);
@@ -446,11 +457,19 @@ public class JabriscaModel implements Runnable {
 				"\n" + username + ":" + message);
 	}
 
+	/**
+	 * 
+	 * @param username
+	 * @param message
+	 */
 	private void updateChat_GameBoard(String username, String message) {
 		gameboard.fetchComponentAndAddValueJTextArea(null, "lobbyChat_display",
 				"\n" + username + ":" + message);
 	}
-
+	
+	/**
+	 * 
+	 */
 	private void createGameRoom() {
 		// TODO Auto-generated method stub
 		// sendMessageToSomeSocket(ManagerSocketServer.CREATE_GAME, parameters);
@@ -460,13 +479,21 @@ public class JabriscaModel implements Runnable {
 		sendMessageToSomeSocket(GameSocketServer.LOGIN_USER, "", gameSocket);
 	}
 
+	/**
+	 * 
+	 */
 	private void sendMessageToChat_Lobby() {
 		// TODO Auto-generated method stub
 		String message = lobby.fetchJTextValue("lobbyChat_message");
 		sendMessageToSomeSocket(ChatSocketServer.MESSAGE, "message=" + message,
 				chatSocket);
 	}
-
+	
+	/**
+	 * 
+	 * @param currentPlayersPosition
+	 * @param quantity
+	 */
 	private void loadLeaderboard(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
 		lobby.setStatus("Loading Leaderboards");
@@ -477,7 +504,12 @@ public class JabriscaModel implements Runnable {
 			updateLeaderboard(parameters);
 		}
 	}
-
+	
+	/**
+	 * 
+	 * @param currentPlayersPosition
+	 * @param quantity
+	 */
 	private void loadPlayers(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
 		lobby.setStatus("Loading Players");

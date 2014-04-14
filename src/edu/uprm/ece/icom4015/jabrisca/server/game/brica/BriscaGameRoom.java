@@ -3,11 +3,11 @@
  */
 package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import edu.uprm.ece.icom4015.jabrisca.server.GameSocketServer;
+import edu.uprm.ece.icom4015.jabrisca.server.ManagerSocketServer;
 
 /**
  * @author EltonJohn
@@ -29,6 +29,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	private String name;
 	private int listenerCount;
 	private GameListener[] gameListeners = new GameListener[MAX_NUMBER_OF_GAMELISTENERS];
+	private boolean isTimed;
+	private boolean playersHaveNotConnected;
 	public static ExecutorService service;
 	private static final long THREAD_SLEEP_TIME = 1000;
 	// Verbs
@@ -84,10 +86,18 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 					e.printStackTrace();
 				}
 			}
-
-			isWaitingForUsers = false;
-
 			// Start game after the initial parameters are set
+			playersHaveNotConnected = true;
+			while (playersHaveNotConnected) {
+				for (Player player : players) {
+					if (player.getUser().getGameSocket() == null) {
+						playersHaveNotConnected = true;
+					} else {
+						playersHaveNotConnected = false;
+					}
+				}// if reach end then all are connected
+			}
+			isWaitingForUsers = false;
 			this.game.startNewGame();
 
 			// Tell everyone the game started
@@ -128,7 +138,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 
 	private void cleanUp() {
 		// TODO get player winner and create a game results object
-		// TODO check if player wants to continue if so check if game is tournament
+		// TODO check if player wants to continue if so check if game is
+		// tournament
 	}
 
 	/**
@@ -138,7 +149,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	private void gameOverEvent(GameEvent gameEvent) {
 		gameEvent.sourceGame = this.name;
 		for (GameListener listener : gameListeners) {
-			if(listener == null)continue;
+			if (listener == null)
+				continue;
 			listener.onGameEnd(gameEvent);
 		}
 	}
@@ -150,7 +162,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	private void gameStartEvent(GameEvent gameEvent) {
 		gameEvent.sourceGame = this.name;
 		for (GameListener listener : gameListeners) {
-			if(listener == null)continue;
+			if (listener == null)
+				continue;
 			listener.onGameStart(gameEvent);
 		}
 	}
@@ -177,7 +190,7 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	/**
 	 * 
 	 */
-	public int getSize() {
+	public synchronized int getSize() {
 		return players.length;
 	}
 
@@ -198,9 +211,12 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	/**
 	 * fetch the player number
 	 */
-	public String playerMadeMove(Player player, String parameters) {
-		return game.play(player, parameters);
-
+	public synchronized String playerMadeMove(Player player, String parameters) {
+		String message = game.play(player, parameters);
+		broadcast(message + "@seat=" + player.getSeatNumber() + ",name="
+				+ player.getUser().getUsername()
+				+ ManagerSocketServer.END_MESSAGE_DELIMETER, player);
+		return message;
 	}
 
 	/**
@@ -210,23 +226,24 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	 * @param player
 	 */
 	public synchronized void broadcast(String message, Player player) {
-		for (Player clients : players) {
+		for (Player client : players) {
 			if (player == null)
 				continue;
-			if (player == clients)
+			if (player == client)
 				continue;
-			clients.getUser().getGameSocket().sendMessage(message);
+			client.getUser().getGameSocket().sendMessage(message);
 		}
 	}
 
 	/**
 	 * 
 	 */
-	public String setParameters(String KeyValuePairs) {
-		if(game == null){
-			game = BriscaGameFactory.instantiante(BriscaGameFactory.VANILLA_BRISCA_GAME, null);
+	public synchronized String setParameters(String KeyValuePairs) {
+		if (game == null) {
+			game = BriscaGameFactory.instantiante(
+					BriscaGameFactory.VANILLA_BRISCA_GAME, null);
 		}
-		
+
 		if (!game.initialParametersSet())
 			isWaitingForUsers = true;
 
@@ -235,13 +252,19 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 			game = BriscaGameFactory.instantiante(
 					BriscaGameFactory.TOURNAMENT_GAME, parameters);
 		}
+		if (KeyValuePairs.contains(GameSocketServer.TIMED_KEY)) {
+			// TODO make time out on turns
+			isTimed = Boolean.parseBoolean(((KeyValuePairs
+					.split(GameSocketServer.TIMED_KEY)[1]).split(",")[0]));
+		}
 		return game.addParameters(KeyValuePairs);
 	}
 
 	/**
 	 * @return
 	 */
-	public boolean addGameLawEnforcer(GameLawEnforcer gameLawEnforcer) {
+	public synchronized boolean addGameLawEnforcer(
+			GameLawEnforcer gameLawEnforcer) {
 		if (gameEnforcerCount < gameEnforcers.length) {
 			gameEnforcers[gameEnforcerCount++] = gameLawEnforcer;
 			gameLawEnforcer.setGameRoom(this);
@@ -250,27 +273,28 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 		} else
 			return false;
 	}
-	
+
 	/**
 	 * 
 	 */
-	public String getHand(Player player) {
+	public synchronized String getHand(Player player) {
 		// TODO Auto-generated method stub
 		return game.showHand(player);
 	}
+
 	/**
 	 * ignored because this class is the game room also
 	 * 
 	 * @ignore
 	 */
-	public void setGameRoom(BriscaGameRoom briscaGameRoom) {
+	public synchronized void setGameRoom(BriscaGameRoom briscaGameRoom) {
 		// TODO Auto-generated method stub
 	}
 
 	/**
 	 * 
 	 */
-	public void start() {
+	public synchronized void start() {
 		ExecutorService service = getExecutor();
 		service.execute(this);
 	}
@@ -285,21 +309,21 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	/**
 	 * 
 	 */
-	public Game getGame() {
+	public synchronized Game getGame() {
 		return game;
 	}
 
 	/**
 	 * @return true if game is been played
 	 */
-	public boolean isBeenPlayed() {
-		return !(game==null)&&!game.hasStarted()||isWaitingForUsers;
+	public synchronized boolean isBeenPlayed() {
+		return !(game == null) && !game.hasStarted() || isWaitingForUsers;
 	}
 
 	/**
 	 * 
 	 */
-	public boolean setGame(Game game) {
+	public synchronized boolean setGame(Game game) {
 		this.game = game;
 		return true;
 	}
@@ -315,18 +339,65 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	 * @param name
 	 *            of room
 	 */
-	public void setName(String name) {
+	public synchronized void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * 
+	 */
+	public synchronized String getGameParameters() {
+		return game.getParameters() + "," + GameSocketServer.TIMED_KEY
+				+ isTimed;
 	}
 
 	/**
 	 * add a listener object
 	 */
-	public void addGameListener(GameListener listener)
+	public synchronized void addGameListener(GameListener listener)
 			throws IllegalArgumentException {
 		if (listenerCount > gameListeners.length)
 			throw new IllegalArgumentException("Too many listeners");
 		this.gameListeners[listenerCount++] = listener;
+	}
+
+	/**
+	 * 
+	 */
+	public synchronized String getGameScore() {
+		if (game == null)
+			throw new IllegalStateException();
+		String result = "score=\"" + "Round " + game.getCurrentRound()
+				+ ":\nPlayer : Score";
+		boolean teams = (Boolean) (game.getParameter(GameSocketServer.TEAMS));
+
+		for (int i = 0; i < playerCount; i++) {
+			result += "\n" + players[i].getUser().getUsername() + ":"
+					+ players[i].getScore();
+		}
+		if (teams) {
+			result += "\nTeam Scores:";
+			for (int i = 0; i < game.getNumberOfTeams(); i++) {
+				result += "\nteam " + i + " has a score of"
+						+ game.gameTeamScore(i);
+			}
+		}
+		return result + "\"";
+	}
+
+	/**
+	 * 
+	 */
+	public synchronized int getCurrentPlayersSeat() {
+		return game.getCurrentPlayersSeat();
+	}
+
+	/**
+	 * 
+	 */
+	public String getCurrentPlayersName() {
+		return players[game.getCurrentPlayersSeat() - 1].getUser()
+				.getUsername();
 	}
 
 	/**
@@ -339,6 +410,7 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 
 		/**
 		 * Generate the proper game
+		 * 
 		 * @param briscaGameFactory
 		 * @param parameters
 		 * @return
@@ -354,4 +426,5 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 		}
 
 	}
+
 }

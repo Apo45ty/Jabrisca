@@ -17,4 +17,8 @@ public interface GameRoom {
 	void setName(String name);
 	void addGameListener(GameListener listener);
 	String getHand(Player player);
+	String getGameParameters();
+	String getGameScore();
+	int getCurrentPlayersSeat();
+	String getCurrentPlayersName();
 }

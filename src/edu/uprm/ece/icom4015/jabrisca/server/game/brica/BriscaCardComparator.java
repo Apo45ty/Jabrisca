@@ -11,10 +11,10 @@ public class BriscaCardComparator {
 	 * @return -1 if card1 is smaller than card2
 	 */
 	public static int compare(ItalianDeckCard card1,ItalianDeckCard card2, ItalianDeckSuit suit){
-		if(card1.getSuit().toString().equals(suit)&&!card2.getSuit().toString().equals(suit)){
+		if(card1.getSuit().toString().equals(suit.toString())&&!card2.getSuit().toString().equals(suit.toString())){
 			//TODO The player with life takes the card
 			return 1;
-		} else if(card2.getSuit().toString().equals(suit)&&!card1.getSuit().toString().equals(suit)){
+		} else if(card2.getSuit().toString().equals(suit.toString())&&!card1.getSuit().toString().equals(suit.toString())){
 			//TODO The player with life takes the card
 			return -1;
 		} //else

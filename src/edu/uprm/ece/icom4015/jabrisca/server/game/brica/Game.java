@@ -14,4 +14,10 @@ public interface Game {
 	String addParameters(String keyValuePairs);
 	boolean hasStarted();
 	String showHand(Player player);
+	String getParameters();
+	int getCurrentPlayersSeat();
+	Object getParameter(String key);
+	int getNumberOfTeams();
+	int gameTeamScore(int i);
+	int getCurrentRound();
 }

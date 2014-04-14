@@ -62,4 +62,14 @@ public class TournamentBrisca implements Game {
 		return null;
 	}
 
+	public String getParameters() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public int getCurrentPlayersSeat() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

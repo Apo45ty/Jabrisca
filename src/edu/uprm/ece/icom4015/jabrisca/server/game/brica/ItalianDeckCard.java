@@ -7,7 +7,21 @@ public class ItalianDeckCard {
 	
 	public ItalianDeckCard(String string) {
 		super();
-		//TODO parse string
+		for(ItalianDeckSuit suit :ItalianDeckSuit.values())begin:{
+			if(string.contains(suit.toString())){
+				String myrank = string.split(suit.toString())[1];
+				for(ItalianDeckRank rank:ItalianDeckRank.values()){
+					if(myrank.equals(rank.getCardNumber()+"")){
+						this.rank = rank;
+						this.suit = suit;
+						break begin;
+					}
+				}
+			}
+		}
+		if(rank==null||suit==null){
+			throw new IllegalArgumentException("Malformed string parameter.");
+		}
 	}
 	
 	public ItalianDeckCard(ItalianDeckSuit suit, ItalianDeckRank rank) {
@@ -38,13 +52,13 @@ public class ItalianDeckCard {
 	@Override
 	public boolean equals(Object arg) {
 		ItalianDeckCard card2 = (ItalianDeckCard) arg;
-		return this.rank.toString().equals(card2.getRank()) && this.suit.toString().equals(card2.getSuit());
+		return this.rank.toString().equals(card2.getRank().toString()) && this.suit.toString().equals(card2.getSuit().toString());
 	}
 	
 	/**
 	 * @author EltonJohn
 	 */
-	enum ItalianDeckSuit{
+	public enum ItalianDeckSuit{
 		bastion("bastion"),
 		cup("cup"),
 		coin("coin"),
@@ -72,10 +86,10 @@ public class ItalianDeckCard {
 		
 	}
 	
-	enum ItalianDeckRank{
-			asso(11,1),
+	public enum ItalianDeckRank{
+			asso(11,14),
 			two(0,2),
-			tre(10,3),
+			tre(10,13),
 			four(0,4),
 			five(0,5),
 			six(0,6),
