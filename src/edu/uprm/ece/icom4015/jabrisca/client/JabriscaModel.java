@@ -3,15 +3,19 @@ package edu.uprm.ece.icom4015.jabrisca.client;
 import java.awt.Point;
 import java.util.concurrent.BlockingQueue;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
 import edu.uprm.ece.icom4015.jabrisca.client.views.AnimatedJabriscaJPanel;
+import edu.uprm.ece.icom4015.jabrisca.client.views.ImageDatabase;
+import edu.uprm.ece.icom4015.jabrisca.client.views.JabriscaImageDatabase;
 import edu.uprm.ece.icom4015.jabrisca.client.views.JabriscaJPanel;
 import edu.uprm.ece.icom4015.jabrisca.server.ChatSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.GameSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.ManagerSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.VanillaSocketThread;
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.ItalianDeckCard;
 
 public class JabriscaModel implements Runnable {
 	private static final String GAME_SOCKET = "GameSocket";
@@ -39,6 +43,7 @@ public class JabriscaModel implements Runnable {
 	private int currentPlayersPosition = 0;
 	private int currentLeaderPosition;
 	public final int MAX_LEADER_RESULTS = MAX_PLAYERS_RESULTS;
+	private ImageDatabase imageDB = new JabriscaImageDatabase();
 	public static final String WAIT_TIME_OUT = "messageTimedOut";
 	public static final String LOG_FILTER = MANAGER_SOCKET;
 
@@ -95,7 +100,7 @@ public class JabriscaModel implements Runnable {
 						} else if (instruction.equals("mouseClicked-jabrisca")) {//
 							if (loginsingup instanceof AnimatedJabriscaJPanel) {
 								// TODO animate login screen
-								
+
 							}//
 						} else if (instruction.equals("singup")) {//
 							// TODO use socket client to sign user in the server
@@ -235,6 +240,24 @@ public class JabriscaModel implements Runnable {
 							// sendMessageToServer(ManagerSocketServer.JOIN_GAME,
 							// sendMessageToServer(GameSocketServer.LOGIN_USER,
 							// parameters);
+							// String
+							// hand=sendMessageToSomeSocket(GameSocketServer.GET_PLAYERS_HAND,
+							// "", gameSocket);
+							for (int i = 1; i <= 3; i++) {
+								String label = "boardGame_myCard" + i;
+								state.setStateParameterValue(label, new ItalianDeckCard("bastion"
+									+ (i + 4)));
+							}
+							
+							for (int i = 1; i <= 3; i++) {
+								String label = "boardGame_myCard" + i;
+								
+								//Add Animation
+								ItalianDeckCard card = (ItalianDeckCard) state
+										.getStateParameterValue(label);
+								ImageIcon image = imageDB.getImage(card);
+								gameboard.setImageIcon(label, image);
+							}
 						} else if (instruction.equals("options_surrender")) {
 							// TODO Tell the server user has surrendered
 							sendMessageToSomeSocket(
@@ -425,7 +448,7 @@ public class JabriscaModel implements Runnable {
 		// rooms=room1{key1:value;key2:value...},room1{key1:value;key2:value...}
 
 	}
-	
+
 	/**
 	 * 
 	 * @param parameters
@@ -436,7 +459,7 @@ public class JabriscaModel implements Runnable {
 		lobby.fetchComponentAndAddValueJTextArea(null, "leaderBoards_display",
 				users, true);
 	}
-	
+
 	/**
 	 * 
 	 * @param parameters
@@ -466,7 +489,7 @@ public class JabriscaModel implements Runnable {
 		gameboard.fetchComponentAndAddValueJTextArea(null, "lobbyChat_display",
 				"\n" + username + ":" + message);
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -488,7 +511,7 @@ public class JabriscaModel implements Runnable {
 		sendMessageToSomeSocket(ChatSocketServer.MESSAGE, "message=" + message,
 				chatSocket);
 	}
-	
+
 	/**
 	 * 
 	 * @param currentPlayersPosition
@@ -504,7 +527,7 @@ public class JabriscaModel implements Runnable {
 			updateLeaderboard(parameters);
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param currentPlayersPosition
@@ -843,10 +866,10 @@ public class JabriscaModel implements Runnable {
 						"onGameStartCardSwap", "surrenderEnabled",
 						"timeLimitOnTurns", "inTournamentMode",
 						"playCardAnimationName", "playCardAnimationParameters",
-						"playerSeat", "boardGame_myCard1_icon",
-						"boardGame_myCard2_icon", "boardGame_myCard3_icon",
-						"boardGame_player1Card", "boardGame_player2Card",
-						"boardGame_player3Card", "boardGame_player4Card"
+						"playerSeat", "boardGame_myCard1", "boardGame_myCard2",
+						"boardGame_myCard3", "boardGame_player1Card",
+						"boardGame_player2Card", "boardGame_player3Card",
+						"boardGame_player4Card"
 				// number given to the player by the server to that is the
 				// players original position in the first play or his "seat" in
 				// the game
@@ -958,6 +981,13 @@ public class JabriscaModel implements Runnable {
 			if (index < 0) {
 				return null;
 			} // else return the found card if so
+			if (parameterValues.length < parameterKeys.length) {
+				Object[] temp = new Object[parameterKeys.length];
+				for (int i = 0;i<parameterValues.length;i++) {
+					temp[i] = parameterValues[i];
+				}
+				parameterValues = temp;
+			}
 			Object result = parameterValues[index];
 			parameterValues[index] = value;
 			return result;
