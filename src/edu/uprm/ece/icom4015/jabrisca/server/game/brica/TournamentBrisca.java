@@ -72,4 +72,24 @@ public class TournamentBrisca implements Game {
 		return 0;
 	}
 
+	public Object getParameter(String key) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public int getNumberOfTeams() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int gameTeamScore(int i) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int getCurrentRound() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

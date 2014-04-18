@@ -39,6 +39,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			+ "-" + "UsenameTaken";
 	public static final String SHOW_USERS = "listUsers";
 	public static final String END_CONNECTION = "end";
+	public static final String END_LINE_DELIMETER = "$";
 
 	/**
 	 * The constructor is an introvert and thus
@@ -154,6 +155,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 						chatServer.addUser(user);
 						user.setUserNumber(currentUsers);
 						user.setLoggedIn(true);
+						user.setMainSocket(this);
 						currentUsers++;
 						System.out.println("Registered User: " + username);
 					} else {
@@ -184,9 +186,14 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				if (userExists) {
 					out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
 					user.setLoggedIn(userExists);
+					user.setMainSocket(this);
 				} else {
 					out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 				}
+			} else if (pushedMessages.contains(LOGOUT_USER)) {
+				// TODO check if user name is valid and create new user
+				user.setLoggedIn(false);
+				out.println(ManagerSocketServer.LOGOUT_SUCCESS+ManagerSocketServer.END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(GET_CHAT_PORT)) {
 				out.println(chatSocketServerPort + END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(END_CONNECTION)) {
@@ -224,11 +231,28 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				}
 			} else if (pushedMessages.contains(GameSocketServer.GET_PLAYERS_ONLINE)) {
 				//TODO Get all players online
-				//for()
-				out.println(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS+"@users="+users);
+				String result = "";
+				for (User user : users) {
+					if (user == null)
+						continue;
+					//else if
+					if(user.isLoggedIn())
+						result += user.getUsername() + "  is logged in."+END_LINE_DELIMETER;
+				}
+				result = result.substring(0, result.length() - 1);
+				out.println(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS+"@"+result +END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(GameSocketServer.GET_TOP_PLAYERS)) {
 				//TODO Get all the top players
-				out.println(GameSocketServer.GET_TOP_PLAYERS_SUCCESS+"@users="+users);
+				String result = "";
+				for (User user : users) {
+					if (user == null)
+						continue;
+					//else if
+					//Sort
+					result += user.getUsername() + "  has a score of "+user.getScore()+"." +END_LINE_DELIMETER;
+				}
+				result = result.substring(0, result.length() - 1);
+				out.println(GameSocketServer.GET_TOP_PLAYERS_SUCCESS+"@"+result +END_MESSAGE_DELIMETER);
 			} // TODO rest of methods
 		}
 

@@ -1,8 +1,12 @@
 package edu.uprm.ece.icom4015.jabrisca.server;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import javax.swing.Timer;
 
 public class ChatSocketServer extends VanillaSocketServer {
 	public static final int MAX_NUMBER_OF_ROOMS = 15; //this does not include the default room that is always added
@@ -20,7 +24,8 @@ public class ChatSocketServer extends VanillaSocketServer {
 	public static final String USER_IS_TYPING = "userIsTyping";
 	public static final String END_MESSAGE_DELIMETER = ManagerSocketServer.END_MESSAGE_DELIMETER;
 	public static final String SHOW_USERS = ManagerSocketServer.SHOW_USERS;
-
+	public static final String MESSAGE_RECEIVED = "messageReceived";
+	
 	/**
 	 * The constructor is an introvert and thus
 	 */
@@ -103,6 +108,9 @@ public class ChatSocketServer extends VanillaSocketServer {
 
 		public ChatRoom room;
 		private User user;
+		//Fix you are using way too many threads !!!!
+		private Timer timeout2;
+		private boolean handledMessage = false;
 
 		public ChatSocketThread(Socket socket) {
 			super(socket);
@@ -135,16 +143,27 @@ public class ChatSocketServer extends VanillaSocketServer {
 					} else {
 						out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 					}
-				} else if (pushedMessages.contains(MESSAGE)) {
+				} else if (pushedMessages.contains(MESSAGE)&&user!=null&&!handledMessage) {
 					String parameters = pushedMessages.split("@")[1];
 					String username = ((parameters.split("username=")[1])
 							.split(",")[0]);
 					String message = ((parameters.split("message=")[1])
 							.split(",")[0]);
 					message = ManagerSocketServer.sanitizeWord(message);
+					out.println(MESSAGE_RECEIVED+END_MESSAGE_DELIMETER);
 					room.broadCast(MESSAGE + "@username=" + username + ","
 							+"message=" + message, user);
-				} else if (pushedMessages.contains(USER_IS_TYPING)) {
+					handledMessage = true;
+					timeout2 = new Timer(700,new ActionListener(){
+
+						public void actionPerformed(ActionEvent arg0) {
+							handledMessage = false;
+							timeout2.stop();
+						}
+						
+					});
+					timeout2.start();
+				} else if (pushedMessages.contains(USER_IS_TYPING)&&user!=null) {
 					String parameters = pushedMessages.split("@")[1];
 					String username = ((parameters.split("username=")[1])
 							.split(",")[0]);

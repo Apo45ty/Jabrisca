@@ -159,6 +159,43 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 						255)));
 		jPanel6.setLayout(null);
 
+		jLabel16.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+				"/Images/Deck/back.jpg"))); // NOI18N
+		jLabel16.setBorder(javax.swing.BorderFactory.createTitledBorder(
+				javax.swing.BorderFactory.createLineBorder(new java.awt.Color(
+						0, 204, 51)), "Player01",
+				javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+				javax.swing.border.TitledBorder.DEFAULT_POSITION,
+				new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(255,
+						255, 255))); // NOI18N
+		jLabel16.setName("boardGame_player1Card"); // NOI18N
+		jPanel6.add(jLabel16);
+		jLabel16.setBounds(330, 10, 150, 260);
+
+		jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+				"/Images/Deck/back.jpg"))); // NOI18N
+		jLabel17.setBorder(javax.swing.BorderFactory.createTitledBorder(null,
+				"Player02",
+				javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+				javax.swing.border.TitledBorder.DEFAULT_POSITION,
+				new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(255,
+						255, 255))); // NOI18N
+		jLabel17.setName("boardGame_player2Card"); // NOI18N
+		jPanel6.add(jLabel17);
+		jLabel17.setBounds(490, 10, 150, 260);
+
+		jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+				"/Images/Deck/back.jpg"))); // NOI18N
+		jLabel18.setBorder(javax.swing.BorderFactory.createTitledBorder(null,
+				"Player03",
+				javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+				javax.swing.border.TitledBorder.DEFAULT_POSITION,
+				new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(255,
+						255, 255))); // NOI18N
+		jLabel18.setName("boardGame_player3Card"); // NOI18N
+		jLabel18.setBounds(330, 280, 150, 260);
+		jPanel6.add(jLabel18);
+
 		jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource(
 				"/Images/Deck/back.jpg"))); // NOI18N
 		jLabel5.setName("boardGame_myCard2"); // NOI18N
@@ -199,6 +236,7 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 		jLabel13.setIcon(new javax.swing.ImageIcon(getClass().getResource(
 				"/Images/Deck/back.jpg"))); // NOI18N
 		jPanel6.add(jLabel13);
+		jPanel6.setComponentZOrder(jLabel13, 3);
 		jLabel13.setBounds(20, 50, 130, 240);
 
 		jLabel10.setIcon(new javax.swing.ImageIcon(getClass().getResource(
@@ -219,43 +257,6 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 
 		jPanel6.add(jLabel12);
 		jLabel12.setBounds(490, 280, 150, 260);
-
-		jLabel16.setIcon(new javax.swing.ImageIcon(getClass().getResource(
-				"/Images/Deck/back.jpg"))); // NOI18N
-		jLabel16.setBorder(javax.swing.BorderFactory.createTitledBorder(
-				javax.swing.BorderFactory.createLineBorder(new java.awt.Color(
-						0, 204, 51)), "Player01",
-				javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-				javax.swing.border.TitledBorder.DEFAULT_POSITION,
-				new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(255,
-						255, 255))); // NOI18N
-		jLabel16.setName("boardGame_player1Card"); // NOI18N
-		jPanel6.add(jLabel16);
-		jLabel16.setBounds(330, 10, 150, 260);
-
-		jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource(
-				"/Images/Deck/back.jpg"))); // NOI18N
-		jLabel17.setBorder(javax.swing.BorderFactory.createTitledBorder(null,
-				"Player02",
-				javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-				javax.swing.border.TitledBorder.DEFAULT_POSITION,
-				new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(255,
-						255, 255))); // NOI18N
-		jLabel17.setName("boardGame_player2Card"); // NOI18N
-		jPanel6.add(jLabel17);
-		jLabel17.setBounds(490, 10, 150, 260);
-
-		jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource(
-				"/Images/Deck/back.jpg"))); // NOI18N
-		jLabel18.setBorder(javax.swing.BorderFactory.createTitledBorder(null,
-				"Player03",
-				javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-				javax.swing.border.TitledBorder.DEFAULT_POSITION,
-				new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(255,
-						255, 255))); // NOI18N
-		jLabel18.setName("boardGame_player3Card"); // NOI18N
-		jPanel6.add(jLabel18);
-		jLabel18.setBounds(330, 280, 150, 260);
 
 		jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource(
 				"/Images/cezanne_joueurs-cartes_2.png"))); // NOI18N
@@ -370,8 +371,12 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 		}
 		// TODO fix the animations
 		// "MoveCardAnimation","boardGame_myCard1","boardGame_player1Card"
-		board.animate("MoveCardAnimation", "boardGame_myCard1",
+		board.animateAsync("MoveCardAnimation", "boardGame_myCard1",
 				"boardGame_player1Card");
+		board.animateAsync("MoveCardAnimation", "boardGame_myCard2",
+				"boardGame_player2Card");
+		board.animateAsync("MoveCardAnimation", "boardGame_myCard3",
+				"boardGame_player3Card");
 	}
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
@@ -541,15 +546,15 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 						null, "boardGame_player4Card")) };
 		String target;
 		DestinationObject destination;
-		int xStep = 5, yStep = 5, tStep = 750;
+		int xStep = 3, yStep = 5, tStep = 10, rotations = 3;
 		Timer timmer;
 		Component target_component;
-		int destinationXOffset = 5; // X Offset of pixels used to determine if
+		int destinationXOffset = 1; // X Offset of pixels used to determine if
 									// card
 									// is near the desired point
-		int destinationYOffset = 5; // Y Offset of pixels used to determine if
-									// card
-									// is near the desired point
+		int destinationYOffset = 17; // Y Offset of pixels used to determine if
+										// card
+										// is near the desired point
 		boolean animating = false; // variable that checks if an animation is
 									// ocuring
 
@@ -596,27 +601,28 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 			timmer = new Timer(tStep, new ActionListener() {
 
 				public void actionPerformed(ActionEvent arg0) {
-					int dirrectionX = (destination.pointMarker
-							.getLocationOnScreen().x - target_component
-							.getLocationOnScreen().x)
-							/ Math.abs(destination.pointMarker
-									.getLocationOnScreen().x
-									- target_component.getLocationOnScreen().x), dirrectionY = (destination.pointMarker
-							.getLocationOnScreen().y - target_component
-							.getLocationOnScreen().y)
-							/ Math.abs(destination.pointMarker
-									.getLocationOnScreen().y
-									- target_component.getLocationOnScreen().y);
+					int currX = target_component.getLocation().x;
+					int currY = target_component.getLocation().y;
+					int destX = destination.pointMarker.getLocation().x;
+					int destY = destination.pointMarker.getLocation().y;
+					int dX = destX - currX;
+					int dY = destY - currY;
 
-					if (Math.abs(destination.pointMarker.getLocationOnScreen().x
-							- target_component.getLocationOnScreen().x) > destinationXOffset
-							&& Math.abs(destination.pointMarker.getLocationOnScreen().y
-									- target_component.getLocationOnScreen().y) > destinationYOffset) {
+					if (Math.abs(dX) > destinationXOffset
+							|| Math.abs(dY) > destinationYOffset) {
 						// TODO move card
-						target_component.move(dirrectionX * xStep, dirrectionY
-								* yStep);
+						int dirrectionX = 0, dirrectionY = 0;
+						// Try to set a dirrection
+						if (Math.abs(dX) > destinationXOffset)
+							dirrectionX = (dX) / Math.abs(dX);
+						if (Math.abs(dY) > destinationYOffset)
+							dirrectionY = ((dY) / Math.abs(dY));
+
+						target_component.setLocation(currX + dirrectionX
+								* xStep, currY + dirrectionY * yStep);
 						getContentPane().repaint();
-					} else {
+					}
+					if ((Math.abs(dX) <= destinationXOffset && Math.abs(dY) <= destinationYOffset)) {
 						timmer.stop();
 						animating = false;
 					}

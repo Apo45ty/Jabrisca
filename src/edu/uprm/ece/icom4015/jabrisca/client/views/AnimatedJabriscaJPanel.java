@@ -12,6 +12,15 @@ public interface AnimatedJabriscaJPanel {
 	boolean animate(String animation,String target, String destination);
 	
 	/**
+	 * This method allows all calling the gameboard to animate any object via a series of predefined strings each associated to specific animation
+	 * @param animation
+	 * @param target
+	 * @param destination
+	 * @return true if the animation was played
+	 */
+	boolean animateAsync(String animation,String target, String destination);
+	
+	/**
 	 * Check if the animation exists
 	 * @param animation
 	 * @return true if the gameboard has the desired animation

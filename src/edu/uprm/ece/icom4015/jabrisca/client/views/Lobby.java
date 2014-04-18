@@ -179,8 +179,8 @@ public class Lobby extends JabriscaJPanel {
 						{ null, null, null, null, null, null, null, null },
 						{ null, null, null, null, null, null, null, null },
 						{ null, null, null, null, null, null, null, null } },
-				new String[] { "RoomName", "Teams", "BlackHand", "CardSwap",
-						"Surrender", "TimeLimit", "Tournament",
+				new String[] { "roomName", "teamGame", "blackhand", "cardSwap",
+						"surrender", "timeLimit", "tournament",
 						"Players" }){
 			@Override
 			public boolean isCellEditable(int arg0, int arg1) {

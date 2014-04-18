@@ -221,13 +221,12 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 
 	/**
 	 * Send the message to the rest of the players
-	 * 
 	 * @param message
 	 * @param player
 	 */
 	public synchronized void broadcast(String message, Player player) {
 		for (Player client : players) {
-			if (player == null)
+			if (client == null)
 				continue;
 			if (player == client)
 				continue;

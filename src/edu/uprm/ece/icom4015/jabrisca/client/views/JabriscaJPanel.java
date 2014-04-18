@@ -60,7 +60,7 @@ public abstract class JabriscaJPanel extends JFrame {
 		this.setName(this.getClass().getName());
 		this.addWindowListener(listener);
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -121,6 +121,7 @@ public abstract class JabriscaJPanel extends JFrame {
 
 	/**
 	 * Add the controller to the menu if this frame has any any
+	 * 
 	 * @param listener2
 	 * @param container
 	 */
@@ -138,6 +139,7 @@ public abstract class JabriscaJPanel extends JFrame {
 
 	/**
 	 * add the listener to all other subclasses
+	 * 
 	 * @param listener
 	 */
 	private void setJabriscaControllerBody(JabriscaController listener,
@@ -226,7 +228,7 @@ public abstract class JabriscaJPanel extends JFrame {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * 
 	 * @param string
@@ -235,7 +237,7 @@ public abstract class JabriscaJPanel extends JFrame {
 		JLabel statusLabel = (JLabel) fetchComponent(null, "statusBar_status");
 		statusLabel.setText(string);
 	}
-	
+
 	/**
 	 * 
 	 * @param i
@@ -248,7 +250,7 @@ public abstract class JabriscaJPanel extends JFrame {
 		progressBar.setValue(i);
 		progressBar.setStringPainted(true);
 	}
-	
+
 	/**
 	 * 
 	 * @param object
@@ -259,7 +261,7 @@ public abstract class JabriscaJPanel extends JFrame {
 			String name, String message) {
 		fetchComponentAndAddValueJTextArea(object, name, message, false);
 	}
-	
+
 	/**
 	 * 
 	 * @param object
@@ -267,8 +269,8 @@ public abstract class JabriscaJPanel extends JFrame {
 	 * @param message
 	 * @param shouldOverwrite
 	 */
-	public void fetchComponentAndAddValueJTextArea(Container object, String name,
-			String message, boolean shouldOverwrite) {
+	public void fetchComponentAndAddValueJTextArea(Container object,
+			String name, String message, boolean shouldOverwrite) {
 		// TODO Auto-generated method stub
 		if (!shouldOverwrite) {
 			JTextArea display = (JTextArea) (fetchComponent(object, name));
@@ -278,16 +280,40 @@ public abstract class JabriscaJPanel extends JFrame {
 			display.setText(message);
 		}
 	}
+
 	/**
 	 * 
 	 * @param name
 	 * @param icon
 	 */
-	public void setImageIcon(String name,ImageIcon icon){
-		Component comp =  fetchComponent(null, name);
-		if(comp instanceof JLabel){
-			JLabel label = (JLabel)comp;
+	public void setImageIcon(String name, ImageIcon icon) {
+		Component comp = fetchComponent(null, name);
+		if (comp instanceof JLabel) {
+			JLabel label = (JLabel) comp;
 			label.setIcon(icon);
 		}
 	}
+
+	/**
+	 * 
+	 * @param result
+	 */
+	public boolean setJTableRow(String[] result, String name) {
+		// TODO game={key1:value;key2:value...},game={key1:value;key2:value...}
+		Component comp = fetchComponent(null, name);
+		if (comp instanceof JTable) {
+			JTable table = (JTable) comp;
+			for (String game : result) {
+				for (int i = 0; i < table.getRowCount(); i++) {
+					for (int j = 0; j < table.getColumnCount(); j++) {
+						String keyvalue = game.split(";")[j + 1];
+						String value = keyvalue.split("=")[1];
+						table.setValueAt(value, i, j);
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	} 
 }

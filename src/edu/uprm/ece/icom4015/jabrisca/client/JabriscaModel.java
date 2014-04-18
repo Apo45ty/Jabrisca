@@ -44,8 +44,10 @@ public class JabriscaModel implements Runnable {
 	private int currentLeaderPosition;
 	public final int MAX_LEADER_RESULTS = MAX_PLAYERS_RESULTS;
 	private ImageDatabase imageDB = new JabriscaImageDatabase();
+	private String currentGameFetched = "";
 	public static final String WAIT_TIME_OUT = "messageTimedOut";
 	public static final String LOG_FILTER = MANAGER_SOCKET;
+	private static final int MAX_GAMES_TO_LOAD = 10;
 
 	public JabriscaModel(BlockingQueue instructions) {
 		this(null, null, null, null, null, instructions);
@@ -87,11 +89,12 @@ public class JabriscaModel implements Runnable {
 						if (instruction.equals("login")) {
 							// Get values and try to login user, await server
 							// verification
-							transitionToState(state);
+							transitionToState(state, null);
 							String result = sendMessageToServer(ManagerSocketServer.LOGIN_USER);
 							if (result
 									.contains(ManagerSocketServer.LOGIN_SUCCESS))
-								transitionToState(ModelStates.lobby);
+
+								transitionToState(ModelStates.lobby, null);
 							else {
 								// TODO handle exception
 								JOptionPane.showMessageDialog(currentWindow,
@@ -105,11 +108,11 @@ public class JabriscaModel implements Runnable {
 						} else if (instruction.equals("singup")) {//
 							// TODO use socket client to sign user in the server
 							// and await server confirmation
-							transitionToState(state);
+							transitionToState(state, null);
 							String result = sendMessageToServer(ManagerSocketServer.SIGNUP_USER);
 							if (result
 									.contains(ManagerSocketServer.SIGNUP_SUCCESS))
-								transitionToState(ModelStates.lobby);
+								transitionToState(ModelStates.lobby, null);
 							else {
 								// TODO handle exception
 								JOptionPane.showMessageDialog(currentWindow,
@@ -140,7 +143,7 @@ public class JabriscaModel implements Runnable {
 							loadRooms();
 						} else if (instruction.equals("games_create")) {
 							// Show the user the create game window
-							transitionToState(ModelStates.newgame);
+							transitionToState(ModelStates.newgame, null);
 						} else if (instruction.equals("players_load")) {
 							// TODO load more player data
 							loadPlayers(currentPlayersPosition,
@@ -169,20 +172,18 @@ public class JabriscaModel implements Runnable {
 							// servers
 							if (result
 									.contains(ManagerSocketServer.LOGOUT_SUCCESS))
-								transitionToState(ModelStates.loginsingup);
+								transitionToState(ModelStates.loginsingup, null);
 							else {
 								// TODO handle exception
 								JOptionPane.showMessageDialog(currentWindow,
 										"Error Loginin. Error:" + result);
 							}
-
-							transitionToState(ModelStates.loginsingup);
-
+							transitionToState(ModelStates.loginsingup, null);
 						} else if (instruction.contains("games_table")) {
 							// TODO parse the message from the table
 							if (instruction.contains(":")) {
 								String parameters = instruction.split(":")[1];
-								Object[] parametersKeyValuePair = parameters
+								String[] parametersKeyValuePair = parameters
 										.split(",");
 								int startGame = JOptionPane.showConfirmDialog(
 										currentWindow,
@@ -226,9 +227,9 @@ public class JabriscaModel implements Runnable {
 							// TODO Create a new game in the server
 							// "GameSocket-"
 							createGameRoom();
-							transitionToState(ModelStates.gameboard);
+							transitionToState(ModelStates.gameboard, null);
 						} else if (instruction.contains("windowClosed")) {// windowClosed
-							transitionToState(ModelStates.lobby);
+							transitionToState(ModelStates.lobby, null);
 						}
 						break;
 					case gameboard:
@@ -240,30 +241,46 @@ public class JabriscaModel implements Runnable {
 							// sendMessageToServer(ManagerSocketServer.JOIN_GAME,
 							// sendMessageToServer(GameSocketServer.LOGIN_USER,
 							// parameters);
-							// String
-							// hand=sendMessageToSomeSocket(GameSocketServer.GET_PLAYERS_HAND,
-							// "", gameSocket);
-							for (int i = 1; i <= 3; i++) {
-								String label = "boardGame_myCard" + i;
-								state.setStateParameterValue(label, new ItalianDeckCard("bastion"
-									+ (i + 4)));
+							String temp = sendMessageToSomeSocket(
+									GameSocketServer.LOGIN_USER, "", gameSocket);
+
+							if (temp.contains(GameSocketServer.LOGIN_FAIL))
+								transitionToState(state, null);
+
+							// String result = "";
+							// while (!result.contains("roomready=true")) {
+							// result = sendMessageToSomeSocket(
+							// GameSocketServer.IS_GAME_ROOM_READY,
+							// "roomname="
+							// + state.getStateParameterValue("roomName"),
+							// gameSocket);
+							// }
+						} else if (instruction.contains(GAME_SOCKET)) {
+							if (instruction
+									.contains(GameSocketServer.SHOW_PLAYERS_HAND)) {
+								String hand = instruction.split("cards=")[1];
+								String[] cards = hand.split("/");
+								for (int i = 1; i <= 3; i++) {
+									String label = "boardGame_myCard" + i;
+									state.setStateParameterValue(label,
+											new ItalianDeckCard(cards[i]));
+								}
 							}
-							
 							for (int i = 1; i <= 3; i++) {
 								String label = "boardGame_myCard" + i;
-								
-								//Add Animation
+								// Add Animation
 								ItalianDeckCard card = (ItalianDeckCard) state
 										.getStateParameterValue(label);
 								ImageIcon image = imageDB.getImage(card);
-								gameboard.setImageIcon(label, image);
+								if (image != null)
+									gameboard.setImageIcon(label, image);
 							}
 						} else if (instruction.equals("options_surrender")) {
 							// TODO Tell the server user has surrendered
 							sendMessageToSomeSocket(
 									GameSocketServer.PLAYER_SURRENDER, "",
 									gameSocket);
-							transitionToState(ModelStates.endgame);
+							transitionToState(ModelStates.endgame, null);
 						} else if (instruction.equals("boardChat_send")) {
 							// TODO Tell the user the number of cards remaining
 							if (instruction.contains(ChatSocketServer.MESSAGE)) {
@@ -334,7 +351,9 @@ public class JabriscaModel implements Runnable {
 										.getStateParameterValue("playCardAnimationName");
 								String animationParameters = (String) state
 										.getStateParameterValue("playCardAnimationParameters");
-
+								if (animationName == null) {
+									animationName = "MoveCardAnimation";
+								}
 								if (animationParameters != null) {
 									animationName += ":" + animationParameters;
 								}
@@ -345,18 +364,17 @@ public class JabriscaModel implements Runnable {
 								String target = instruction
 										.split("mouseClicked-")[1];
 								// get the seat assigned to the player by server
-								int playerSeat = (Integer) state
+								String seatString = (String) state
 										.getStateParameterValue("playerSeat");
-
+								if (seatString == null) {
+									seatString = "0";
+								}
+								int playerSeat = Integer.parseInt(seatString);
 								String destination = "boardGame_player"
 										+ (playerSeat + 1) + "Card";
 
-								if (boardanimator.animate(animationName,
-										target, destination)) {
-									// Animation was played
-								} else {
-									// Animation could not be played
-								}
+								boardanimator.animateAsync(animationName,
+										target, destination);
 							}
 						} else if (instruction.contains(CHAT_SOCKET)) {
 							if (instruction.contains(ChatSocketServer.MESSAGE)) {
@@ -381,11 +399,11 @@ public class JabriscaModel implements Runnable {
 									.contains(GameSocketServer.PLAYER_CANT_SURRENDER)) {
 								// TODO handle player cant surrender
 							}
-							transitionToState(ModelStates.lobby);
+							transitionToState(ModelStates.lobby, null);
 						} else if (instruction
 								.contains("windowClosed-EndGameWindow")) {
 							// windowClosed
-							transitionToState(ModelStates.lobby);
+							transitionToState(ModelStates.lobby, null);
 						} else if (instruction.contains("continue")) {
 							// TODO player continues
 							String result = sendMessageToSomeSocket(
@@ -402,7 +420,7 @@ public class JabriscaModel implements Runnable {
 									.contains(GameSocketServer.PLAYER_CANT_CONTINUE_TRUE)) {
 								// TODO if game is not in tournament mode
 								// continue to the lobby
-								transitionToState(ModelStates.lobby);
+								transitionToState(ModelStates.lobby, null);
 							}
 						}
 						break;
@@ -446,27 +464,43 @@ public class JabriscaModel implements Runnable {
 	private void loadRooms() {
 		// TODO Auto-generated method stub
 		// rooms=room1{key1:value;key2:value...},room1{key1:value;key2:value...}
-
+		lobby.setStatus("Loading Rooms");
+		String[] results = new String[MAX_GAMES_TO_LOAD];
+		String response = sendMessageToServer(GameSocketServer.GET_ALL_GAMES+MAX_GAMES_TO_LOAD);
+		results = response.split(ManagerSocketServer.END_LINE_DELIMETER);
+//		for (int i = 0; i < MAX_GAMES_TO_LOAD; i++) {
+//			results[i] = sendMessageToServer(GameSocketServer.GET_GAME
+//					+ i);
+//			currentGameFetched = results[i];
+//			if (results[i].contains(GameSocketServer.COULD_LOAD_GAMES)) {
+//				results[i] = results[i].split("@")[1];
+//			} else
+//				break;
+//		}
+		lobby.setJTableRow(results, "games_table");
+		lobby.setStatus("Done");
 	}
 
 	/**
-	 * 
 	 * @param parameters
 	 */
 	private void updateLeaderboard(String parameters) {
 		// TODO Auto-generated method stub
-		String users = ((parameters.split("users=")[1]).split(",")[0]);
+		String users = (parameters
+				.split(ManagerSocketServer.END_MESSAGE_DELIMETER)[0]);
+		users = users.replace(ManagerSocketServer.END_LINE_DELIMETER, "\n");
 		lobby.fetchComponentAndAddValueJTextArea(null, "leaderBoards_display",
 				users, true);
 	}
 
 	/**
-	 * 
 	 * @param parameters
 	 */
 	private void updatePlayers(String parameters) {
 		// TODO Auto-generated method stub
-		String users = ((parameters.split("users=")[1]).split(",")[0]);
+		String users = (parameters
+				.split(ManagerSocketServer.END_MESSAGE_DELIMETER)[0]);
+		users = users.replace(ManagerSocketServer.END_LINE_DELIMETER, "\n");
 		lobby.fetchComponentAndAddValueJTextArea(null, "players_display",
 				users, true);
 	}
@@ -481,7 +515,6 @@ public class JabriscaModel implements Runnable {
 	}
 
 	/**
-	 * 
 	 * @param username
 	 * @param message
 	 */
@@ -491,7 +524,6 @@ public class JabriscaModel implements Runnable {
 	}
 
 	/**
-	 * 
 	 */
 	private void createGameRoom() {
 		// TODO Auto-generated method stub
@@ -503,46 +535,54 @@ public class JabriscaModel implements Runnable {
 	}
 
 	/**
-	 * 
 	 */
 	private void sendMessageToChat_Lobby() {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated meth od stub
 		String message = lobby.fetchJTextValue("lobbyChat_message");
-		sendMessageToSomeSocket(ChatSocketServer.MESSAGE, "message=" + message,
-				chatSocket);
+		String result = sendMessageToSomeSocket(ChatSocketServer.MESSAGE,
+				",message=" + message, chatSocket);
+		if (result.contains(ChatSocketServer.MESSAGE_RECEIVED)) {
+			updateChat_Lobby("Me", message);
+		}
 	}
 
 	/**
-	 * 
 	 * @param currentPlayersPosition
 	 * @param quantity
 	 */
 	private void loadLeaderboard(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
 		lobby.setStatus("Loading Leaderboards");
+		this.currentLeaderPosition = quantity;
 		String result = sendMessageToServer(GameSocketServer.GET_TOP_PLAYERS,
-				"startAt=" + currentPlayersPosition + ",quantity=" + quantity);
+				",startAt=" + currentPlayersPosition + ",quantity=" + quantity);
 		if (result.contains(GameSocketServer.GET_TOP_PLAYERS_SUCCESS)) {
+			lobby.setStatus("Updating Leaderboards");
 			String parameters = result.split("@")[1];
 			updateLeaderboard(parameters);
-		}
+			lobby.setStatus("Done");
+		} else
+			lobby.setStatus("Error loading leaderboards." +result);
 	}
 
 	/**
-	 * 
 	 * @param currentPlayersPosition
 	 * @param quantity
 	 */
 	private void loadPlayers(int currentPlayersPosition, int quantity) {
 		// TODO Auto-generated method stub
 		lobby.setStatus("Loading Players");
+		this.currentPlayersPosition = quantity;
 		String result = sendMessageToServer(
-				GameSocketServer.GET_PLAYERS_ONLINE, "startAt="
+				GameSocketServer.GET_PLAYERS_ONLINE, ",startAt="
 						+ currentPlayersPosition + ",quantity=" + quantity);
 		if (result.contains(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS)) {
+			lobby.setStatus("Updating Players");
 			String parameters = result.split("@")[1];
 			updatePlayers(parameters);
-		}
+			lobby.setStatus("Done");
+		} else
+			lobby.setStatus("Error loading players."+result);
 	}
 
 	/**
@@ -577,12 +617,13 @@ public class JabriscaModel implements Runnable {
 	 */
 	private String sendMessageToSomeSocket(String message,
 			String extraParameters, VanillaSocketThread socket) {
+		extraParameters = extraParameters == null ? "" : extraParameters;
 		String result = null;
 		try {
 			result = socket.sendMessageWaitResponse(message + "@" + "username="
 					+ state.getStateParameterValue("username") + ","
-					+ "password=" + state.getStateParameterValue("password"))
-					+ extraParameters;
+					+ "password=" + state.getStateParameterValue("password")
+					+ extraParameters);
 		} catch (Exception e) {
 			String output = "Unexpected error, gracefully dealing with it in "
 					+ getClass().getSimpleName() + ". Error: "
@@ -599,11 +640,12 @@ public class JabriscaModel implements Runnable {
 	 * 
 	 * @param nextState
 	 */
-	private void transitionToState(ModelStates nextState)
-			throws IllegalStateException {
+	private void transitionToState(ModelStates nextState,
+			String[] parametersKeyValuePair) throws IllegalStateException {
 		// TODO Actually implements this method fetch the value of the
 		// parameters for the next state
 		Object[] stateParameters = state.getStateParametersValues();
+
 		// Map all posible transitions
 		switch (state) {
 		case loginsingup:
@@ -625,6 +667,8 @@ public class JabriscaModel implements Runnable {
 			case newgame:
 				break;
 			case gameboard:
+				break;
+			case loginsingup:
 				break;
 			default:
 				throw new IllegalStateException();
@@ -668,20 +712,17 @@ public class JabriscaModel implements Runnable {
 		setState(nextState);
 		if (stateParameters != null)
 			state.setStateParameterValues(stateParameters);
-	}
 
-	/**
-	 * Transition to new state and set the parameters for the next state
-	 * 
-	 * @param nextState
-	 *            to transition to
-	 * @param parametersKeyValuePair
-	 *            a string array of parameters joined as key value pairs
-	 */
-	private void transitionToState(ModelStates nextState,
-			Object[] parametersKeyValuePair) {
-		// TODO Actually implement this method
-		transitionToState(nextState);
+		if (parametersKeyValuePair != null) {
+			for (String keyvalue : parametersKeyValuePair) {
+				for (String key : state.getParameterKeys()) {
+					if (keyvalue.contains(key + "=")) {
+						state.setStateParameterValue(key,
+								keyvalue.split("=")[1]);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -712,6 +753,9 @@ public class JabriscaModel implements Runnable {
 		myThread.start();
 	}
 
+	/**
+	 * You deserver better then I must be better
+	 */
 	private void attempConnection() {
 		int i = 0;
 		boolean connecting = true;
@@ -862,9 +906,8 @@ public class JabriscaModel implements Runnable {
 			@Override
 			void setStateParametersValues() {
 				String[] stateParameters = { "username", "password",
-						"roomName", "teamGame", "blackHandEnabled",
-						"onGameStartCardSwap", "surrenderEnabled",
-						"timeLimitOnTurns", "inTournamentMode",
+						"roomName", "teamGame", "blackhand", "cardswap",
+						"surrender", "timeLimit", "tournament",
 						"playCardAnimationName", "playCardAnimationParameters",
 						"playerSeat", "boardGame_myCard1", "boardGame_myCard2",
 						"boardGame_myCard3", "boardGame_player1Card",
@@ -881,9 +924,8 @@ public class JabriscaModel implements Runnable {
 			@Override
 			void setStateParametersValues() {
 				String[] stateParameters = { "roomName", "teamGame",
-						"blackHandEnabled", "onGameStartCardSwap",
-						"surrenderEnabled", "timeLimitOnTurns",
-						"inTournamentMode" };
+						"blackhand", "cardSwap", "surrender", "timeLimit",
+						"tournament" };
 				parameterKeys = stateParameters;
 			}
 		};
@@ -927,6 +969,18 @@ public class JabriscaModel implements Runnable {
 		 */
 		abstract void setStateParametersValues();
 
+		/**
+		 * @return the parameterKeys
+		 */
+		public synchronized String[] getParameterKeys() {
+			return parameterKeys;
+		}
+
+		/**
+		 * 
+		 * @param index
+		 * @return
+		 */
 		public Object getStateParameterValue(int index) {
 			return parameterValues[index];
 		}
@@ -983,7 +1037,7 @@ public class JabriscaModel implements Runnable {
 			} // else return the found card if so
 			if (parameterValues.length < parameterKeys.length) {
 				Object[] temp = new Object[parameterKeys.length];
-				for (int i = 0;i<parameterValues.length;i++) {
+				for (int i = 0; i < parameterValues.length; i++) {
 					temp[i] = parameterValues[i];
 				}
 				parameterValues = temp;

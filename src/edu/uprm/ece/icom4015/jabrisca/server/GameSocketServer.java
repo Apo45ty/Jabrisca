@@ -77,6 +77,11 @@ public class GameSocketServer implements Runnable {
 	public static final String PLAYER_HAS_NOT_DRAWN_CARD = "playerHasNotDrawCard";
 	public static final String CANT_DRAW_CARDS = "playerCantDrawCards";
 	public static final String GET_STACK = "getCardStack";
+	public static final String IS_GAME_ROOM_FULL = "isGameRoomFull";
+	public static final String IS_GAME_ROOM_READY = "isGameRoomReady";
+	public static final String GET_GAME = "getGame";
+	public static final String COULD_LOAD_GAMES = "gamesLoaded";
+	public static final String GET_ALL_GAMES = "getAllGames";
 
 	/**
 	 * The constructor is an introvert and thus Here we add all the Game Law
@@ -239,7 +244,12 @@ public class GameSocketServer implements Runnable {
 			} else if (pushedMessages.contains(GameSocketServer.GAME_ENDED)
 					&& pushedMessages.contains(GAMELISTENER_NAME)) {
 				// TODO send the player his hand
-			} // TODO add the rest of the methods
+			} else if (pushedMessages
+					.contains(GameSocketServer.IS_GAME_ROOM_FULL)) {
+				// TODO send the player his hand
+				boolean isGameRoomReady = !room.isBeenPlayed();
+				out.println(IS_GAME_ROOM_READY+"@roomready="+isGameRoomReady+ END_MESSAGE_DELIMETER);
+			} // TODO add the rest of the methods 
 		}
 
 		public void onGameStart(GameEvent e) {

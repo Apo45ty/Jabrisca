@@ -20,7 +20,11 @@ public abstract class VanillaSocketThread implements Runnable {
 	public boolean done;
 	private boolean waitingForResponse = false;
 	private String response = "";
-
+	private Timer timeout;
+	
+	/**
+	 * @param socket
+	 */
 	public VanillaSocketThread(Socket socket) {
 		this.socket = socket;
 		try {
@@ -31,7 +35,11 @@ public abstract class VanillaSocketThread implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
+	
+	/**
+	 * @param hostURL
+	 * @param mainPort
+	 */
 	protected VanillaSocketThread(String hostURL, int mainPort) {
 		try {
 			this.socket = new Socket(hostURL, mainPort);
@@ -48,6 +56,9 @@ public abstract class VanillaSocketThread implements Runnable {
 
 	}
 	
+	/**
+	 * 
+	 */
 	public void run() {
 		try {
 			while (!done) {
@@ -81,12 +92,14 @@ public abstract class VanillaSocketThread implements Runnable {
 			}
 		}
 	}
-
-
+	
+	/**
+	 * 
+	 * @param pushedMessages
+	 */
 	public abstract void main(String pushedMessages);
 
 	/**
-	 * 
 	 * @param message
 	 * @param username
 	 * @param password
@@ -105,12 +118,13 @@ public abstract class VanillaSocketThread implements Runnable {
 	 */
 	public String sendMessageWaitResponse(String message) {
 		waitingForResponse = true;
-		final Timer timeout = new Timer(1000,new ActionListener() {
+		timeout = new Timer(1500,new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if(waitingForResponse){
-					response = JabriscaModel.WAIT_TIME_OUT;
+					response = JabriscaModel.WAIT_TIME_OUT+"@";
 					waitingForResponse= false;
 				}
+				timeout.stop();
 			}
 		});
 		timeout.start();
@@ -119,10 +133,17 @@ public abstract class VanillaSocketThread implements Runnable {
 		}
 		return response;
 	}
-
+	
+	/**
+	 * @param message
+	 */
 	public void sendMessage(String message) {
 		out.println(message);
 	}
+	
+	/**
+	 * @return
+	 */
 	public boolean isConnected(){
 		return socket.isConnected();
 	}
