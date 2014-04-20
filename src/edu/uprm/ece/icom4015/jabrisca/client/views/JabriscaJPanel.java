@@ -306,13 +306,30 @@ public abstract class JabriscaJPanel extends JFrame {
 			for (String game : result) {
 				for (int i = 0; i < table.getRowCount(); i++) {
 					for (int j = 0; j < table.getColumnCount(); j++) {
-						String keyvalue = game.split(";")[j + 1];
-						String value = keyvalue.split("=")[1];
-						table.setValueAt(value, i, j);
+						String cName = table.getColumnName(j);
+						String[] tempResults = result[i].replace("}", "").split(";"); 
+						//Search for value to place
+						for(int k=0;k<tempResults.length;k++){
+							if(tempResults[k].contains(cName)){
+								String value = tempResults[k].split(":")[1];
+								table.setValueAt(value, i, j);
+								break;
+							}
+						}
 					}
 				}
 			}
 			return true;
+		}
+		return false;
+	}
+
+	public boolean isCheckedIcon(String name) {
+		// TODO Auto-generated method stub
+		Component comp = fetchComponent(null, name);
+		if (comp instanceof JRadioButton) {
+			JRadioButton radioButt = (JRadioButton) comp;
+			return radioButt.isSelected();
 		}
 		return false;
 	} 

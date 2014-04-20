@@ -4,12 +4,18 @@ public abstract class VanillaSocketServer implements Runnable{
 	public VanillaSocketServer() {
 		initializeUsers();
 	}
-	public static User[] users;
+	public User[] users;
 	
 	/**
 	 * Initialize the users
 	 */
 	abstract void initializeUsers();
 	
+	/**
+	 * @return
+	 */
+	public User[] getUsers(){
+		return users;
+	}
 	
 }

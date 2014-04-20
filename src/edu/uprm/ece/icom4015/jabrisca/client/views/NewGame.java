@@ -76,7 +76,6 @@ public class NewGame extends JabriscaJPanel {
         jTextField1.setText("RoomName");
         jTextField1.setName("roomName"); 
         jTextField1.setMaximumSize(new java.awt.Dimension(640, 30));
-        jTextField1.setName("name"); // NOI18N
         jPanel2.add(jTextField1);
 
         jRadioButton6.setText("Play in Teams");

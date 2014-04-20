@@ -21,4 +21,6 @@ public interface GameRoom {
 	String getGameScore();
 	int getCurrentPlayersSeat();
 	String getCurrentPlayersName();
+	void setId(int id);
+	int getId();
 }

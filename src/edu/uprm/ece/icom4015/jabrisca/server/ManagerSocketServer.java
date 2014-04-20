@@ -1,13 +1,21 @@
 package edu.uprm.ece.icom4015.jabrisca.server;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import javax.swing.Timer;
+
+import edu.uprm.ece.icom4015.jabrisca.server.ChatSocketServer.ChatSocketThread;
+import edu.uprm.ece.icom4015.jabrisca.server.GameSocketServer.GameSocketThread;
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.BriscaGameRoom;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameEvent;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameListener;
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameRoom;
 
 public class ManagerSocketServer extends VanillaSocketServer {
 	private static ManagerSocketServer instance;
@@ -18,7 +26,8 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static int managerSocketServerPort = 6767;
 	public static GameSocketServer gameServer;
 	public static ChatSocketServer chatServer;
-	private String[] badWords = { "cabron", "pendejo", "popo", "puta" ,"cago","jodienda","joder"};
+	private String[] badWords = { "cabron", "pendejo", "popo", "puta", "cago",
+			"jodienda", "joder" };
 	public static BlockingDeque bannedWords = new LinkedBlockingDeque();
 	public static int currentUsers = 0;
 	// Verbs
@@ -38,7 +47,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static final String SIGNUP_FAILED_USERNAME_TAKEN = SIGNUP_FAILED
 			+ "-" + "UsenameTaken";
 	public static final String SHOW_USERS = "listUsers";
-	public static final String END_CONNECTION = "end";
+	public static final String END_CONNECTION = "endConnection";
 	public static final String END_LINE_DELIMETER = "$";
 
 	/**
@@ -101,6 +110,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	 * 
 	 */
 	public void run() {
+		Thread.currentThread().setName("ManagerSocketServer");
 		chatServer = ChatSocketServer.getServerSingleton();
 		chatServer.start(chatSocketServerPort);
 		gameServer = GameSocketServer.getServerSingleton();
@@ -129,8 +139,9 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 	class MainSocketThread extends VanillaSocketThread implements GameListener {
 
-		
 		private User user;
+		private boolean clearingBuffer = false;
+		private Timer timeout2;
 
 		public MainSocketThread(Socket socket) {
 			super(socket);
@@ -144,10 +155,11 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				String parameters = pushedMessages.split("@")[1];
 				String username = ((parameters.split("username=")[1])
 						.split(",")[0]);
-				// Clean the word
 				username = sanitizeWord(username);
 				String password = ((parameters.split("password=")[1])
 						.split(",")[0]);
+				Thread.currentThread()
+						.setName("ManagerSocketClient" + username);
 				if (!userExists(username, password)) {
 					this.user = User.getInstance(username, password, 0);
 					if (allowcateUser(user, users)) {
@@ -172,6 +184,8 @@ public class ManagerSocketServer extends VanillaSocketServer {
 						.split(",")[0]);
 				String password = ((parameters.split("password=")[1])
 						.split(",")[0]);
+				Thread.currentThread()
+						.setName("ManagerSocketClient" + username);
 				boolean userExists = false;
 				for (User user : users) {
 					if (user == null)
@@ -191,9 +205,10 @@ public class ManagerSocketServer extends VanillaSocketServer {
 					out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 				}
 			} else if (pushedMessages.contains(LOGOUT_USER)) {
-				// TODO check if user name is valid and create new user
+				// TODO check if user name is valid and create00 new user
 				user.setLoggedIn(false);
-				out.println(ManagerSocketServer.LOGOUT_SUCCESS+ManagerSocketServer.END_MESSAGE_DELIMETER);
+				out.println(ManagerSocketServer.LOGOUT_SUCCESS
+						+ ManagerSocketServer.END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(GET_CHAT_PORT)) {
 				out.println(chatSocketServerPort + END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(END_CONNECTION)) {
@@ -211,12 +226,24 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			} else if (pushedMessages.contains(GET_GAME_PORT)) {
 				out.println(gameSocketServerPort + END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(LOGOUT_USER)) {
+				user.setLoggedIn(false);
 				out.println(LOGOUT_SUCCESS + END_MESSAGE_DELIMETER);
-			} else if (pushedMessages.contains(CREATE_GAME)) {
+			} else if (pushedMessages.contains(CREATE_GAME) && !clearingBuffer) {
 				// TODO do something special: verify game can be created,
 				// switch the user to the proper chat room, create game ...
 				String parameters = pushedMessages.split("@")[1];
 				out.println(GameSocketServer.createGame(parameters, user));
+				clearingBuffer = true;
+				// TODO setup chat
+				((ChatSocketThread) (user.getChatSocket())).room = ChatSocketServer.rooms[((GameSocketThread) (user
+						.getGameSocket())).room.getId()];
+				timeout2 = new Timer(1500, new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						clearingBuffer = false;
+						timeout2.stop();
+					}
+				});
+				timeout2.start();
 			} else if (pushedMessages.contains(JOIN_GAME)) {
 				// TODO do something special: verify game can be Joined,
 				// switch the user to the proper chat room, create game ...
@@ -224,35 +251,56 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				String roomName = ((parameters.split("roomname=")[1])
 						.split(",")[0]);
 				int result = GameSocketServer.addUser(roomName, user);
-				if(result>=0){
-					out.println(GameSocketServer.PLAYER_JOINED_ROOM);
+				if (result >= 0) {
+					out.println(GameSocketServer.PLAYER_JOINED_ROOM + "@"
+							+ BriscaGameRoom.NUMBER_OF_PLAYERS_KEY + result);
 				} else {
 					out.println(GameSocketServer.PLAYER_CANT_JOINED_ROOM);
 				}
-			} else if (pushedMessages.contains(GameSocketServer.GET_PLAYERS_ONLINE)) {
-				//TODO Get all players online
+			} else if (pushedMessages.contains(GameSocketServer.GET_ALL_GAMES)) {
+				String result = "";
+				int num = Integer.parseInt(((pushedMessages.split("load=")[1])
+						.split(",")[0]));
+				GameRoom[] rooms = gameServer.getRooms();
+				for (int i = 0; i < num; i++) {
+					if (rooms[i] == null || rooms[i].toString() == null)
+						continue;
+					result += i + "game=" + rooms[i].toString()
+							+ END_LINE_DELIMETER;
+				}
+
+				out.println(GameSocketServer.GET_ALL_GAMES_SUCCESS + "@"
+						+ result + END_MESSAGE_DELIMETER);
+			} else if (pushedMessages
+					.contains(GameSocketServer.GET_PLAYERS_ONLINE)) {
+				// TODO Get all players online
 				String result = "";
 				for (User user : users) {
 					if (user == null)
 						continue;
-					//else if
-					if(user.isLoggedIn())
-						result += user.getUsername() + "  is logged in."+END_LINE_DELIMETER;
+					// else if
+					if (user.isLoggedIn())
+						result += user.getUsername() + "  is logged in."
+								+ END_LINE_DELIMETER;
 				}
 				result = result.substring(0, result.length() - 1);
-				out.println(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS+"@"+result +END_MESSAGE_DELIMETER);
-			} else if (pushedMessages.contains(GameSocketServer.GET_TOP_PLAYERS)) {
-				//TODO Get all the top players
+				out.println(GameSocketServer.GET_PLAYERS_ONLINE_SUCCESS + "@"
+						+ result + END_MESSAGE_DELIMETER);
+			} else if (pushedMessages
+					.contains(GameSocketServer.GET_TOP_PLAYERS)) {
+				// TODO Get all the top players
 				String result = "";
 				for (User user : users) {
 					if (user == null)
 						continue;
-					//else if
-					//Sort
-					result += user.getUsername() + "  has a score of "+user.getScore()+"." +END_LINE_DELIMETER;
+					// else if
+					// Sort
+					result += user.getUsername() + "  has a score of "
+							+ user.getScore() + "." + END_LINE_DELIMETER;
 				}
 				result = result.substring(0, result.length() - 1);
-				out.println(GameSocketServer.GET_TOP_PLAYERS_SUCCESS+"@"+result +END_MESSAGE_DELIMETER);
+				out.println(GameSocketServer.GET_TOP_PLAYERS_SUCCESS + "@"
+						+ result + END_MESSAGE_DELIMETER);
 			} // TODO rest of methods
 		}
 
@@ -317,8 +365,8 @@ public class ManagerSocketServer extends VanillaSocketServer {
 			if (word.contains(badWord)) {
 				result = "";
 				// RemoveInstanceOfWord and add all other parts
-				for (String part : word.split(word)) {
-					result += part;
+				for (String part : word.split(badWord)) {
+					result += part + "@#$%&!";
 				}
 			}
 		}

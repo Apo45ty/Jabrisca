@@ -6,6 +6,7 @@ package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import edu.uprm.ece.icom4015.jabrisca.server.BriscaGameFactory;
 import edu.uprm.ece.icom4015.jabrisca.server.GameSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.ManagerSocketServer;
 
@@ -14,7 +15,7 @@ import edu.uprm.ece.icom4015.jabrisca.server.ManagerSocketServer;
  * 
  */
 public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
-
+	private int id=0;
 	private static final int MAX_NUMBER_OF_THREADS = 3;
 	private Player[] players = new Player[GameSocketServer.MAX_NUMBER_OF_USERS_PER_GAME];
 	private final int MAX_NUMBER_OF_ENFORCERS = 1;
@@ -34,8 +35,10 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	public static ExecutorService service;
 	private static final long THREAD_SLEEP_TIME = 1000;
 	// Verbs
-	private static final String A_GAME_HAS_ENDED = "gameEnded";
-	private static final String A_GAME_HAS_STARTED = "-" + "gameStarted";
+	public static final String A_GAME_HAS_ENDED = "gameEnded";
+	public static final String A_GAME_HAS_STARTED = "-" + "gameStarted";
+	public static final String PLAYER_HAS_JOINED = "playerJoined";
+	public static final String NUMBER_OF_PLAYERS_KEY = "numeroplayers=";
 
 	private BriscaGameRoom(int roomSize) {
 		this.players = new Player[roomSize];
@@ -177,11 +180,14 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 			player.setSeatNumber(game.addPlayer(player));
 			players[playerCount++] = player;
 			addGameListener((GameListener) player.getUser().getGameSocket());
-			if (playerCount == players.length) {
+			if (playerCount == 1) {
 				for (GameLawEnforcer game : gameEnforcers) {
 					game.start();
 				}
 			}
+			broadcast(PLAYER_HAS_JOINED + "@username="
+					+ player.getUser().getUsername() + ","
+					+ NUMBER_OF_PLAYERS_KEY + playerCount, player);
 			return playerCount;
 		}
 		return -1;
@@ -221,6 +227,7 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 
 	/**
 	 * Send the message to the rest of the players
+	 * 
 	 * @param message
 	 * @param player
 	 */
@@ -246,7 +253,7 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 		if (!game.initialParametersSet())
 			isWaitingForUsers = true;
 
-		if (KeyValuePairs.contains(BriscaGameFactory.TOURNAMENT_GAME)) {
+		if (KeyValuePairs.contains(BriscaGameFactory.TOURNAMENT_GAME + "=true")) {
 			Object[] parameters = { game };
 			game = BriscaGameFactory.instantiante(
 					BriscaGameFactory.TOURNAMENT_GAME, parameters);
@@ -316,7 +323,13 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	 * @return true if game is been played
 	 */
 	public synchronized boolean isBeenPlayed() {
-		return !(game == null) && !game.hasStarted() || isWaitingForUsers;
+		boolean result = !(game == null) && !game.hasStarted()
+				|| isWaitingForUsers;
+		if (playerCount == 0) {
+			result = false;
+			game = null;
+		}
+		return result;
 	}
 
 	/**
@@ -399,31 +412,31 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 				.getUsername();
 	}
 
-	/**
-	 * @author EltonJohn
-	 */
-	static class BriscaGameFactory {
-
-		public static final String VANILLA_BRISCA_GAME = "brisca";
-		public static final String TOURNAMENT_GAME = "tournament";
-
-		/**
-		 * Generate the proper game
-		 * 
-		 * @param briscaGameFactory
-		 * @param parameters
-		 * @return
-		 */
-		public static Game instantiante(String briscaGameFactory,
-				Object[] parameters) {
-			if (briscaGameFactory.contains(VANILLA_BRISCA_GAME)) {
-				return new BriscaGame();
-			} else if (briscaGameFactory.contains(TOURNAMENT_GAME)) {
-				return new TournamentBrisca((BriscaGame) parameters[0]);
-			} // else
+	@Override
+	public String toString() {
+		// TODO {key1:value;key2:value...}
+		if (game == null)
 			return null;
-		}
+		String result = "{roomName=" + this.name + ","
+				+ GameSocketServer.TIMED_KEY + isTimed + ",";
+		String tResult = game.getParameters();
+		if (tResult != null)
+			result = (result + tResult);
+		return result.replace("=", ":").replace(",", ";") + "} ";
+	}
 
+	/**
+	 * @return the id
+	 */
+	public synchronized int getId() {
+		return id;
+	}
+
+	/**
+	 * @param id the id to set
+	 */
+	public synchronized void setId(int id) {
+		this.id = id;
 	}
 
 }

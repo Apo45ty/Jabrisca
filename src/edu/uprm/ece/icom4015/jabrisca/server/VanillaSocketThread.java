@@ -21,6 +21,8 @@ public abstract class VanillaSocketThread implements Runnable {
 	private boolean waitingForResponse = false;
 	private String response = "";
 	private Timer timeout;
+	public static final long TIME_OUT_WAIT = 2000;
+	public static final String CLOSING_SOCKET = "socketIsClosing";
 	
 	/**
 	 * @param socket
@@ -61,6 +63,7 @@ public abstract class VanillaSocketThread implements Runnable {
 	 */
 	public void run() {
 		try {
+			Thread.currentThread().setName("VanillaSocketThread");
 			while (!done) {
 				String input = "";
 				input = in.readLine();
@@ -85,6 +88,7 @@ public abstract class VanillaSocketThread implements Runnable {
 					+ getClass().getTypeName() + ",Excetion" + e.getMessage());
 		} finally {
 			try {
+				out.println(CLOSING_SOCKET);
 				socket.close();
 			} catch (IOException e) {
 				// TODO Handle connection errors
@@ -104,9 +108,10 @@ public abstract class VanillaSocketThread implements Runnable {
 	 * @param username
 	 * @param password
 	 * @return
+	 * @throws InterruptedException 
 	 */
 	public String sendMessageWaitResponse(String message, String username,
-			String password,String extraParameters) {
+			String password,String extraParameters) throws InterruptedException {
 		return sendMessageWaitResponse(message + "@" + username + ","
 				+ password+extraParameters);
 	}
@@ -115,10 +120,11 @@ public abstract class VanillaSocketThread implements Runnable {
 	 * 
 	 * @param message
 	 * @return
+	 * @throws InterruptedException 
 	 */
-	public String sendMessageWaitResponse(String message) {
+	public String sendMessageWaitResponse(String message) throws InterruptedException {
 		waitingForResponse = true;
-		timeout = new Timer(1500,new ActionListener() {
+		timeout = new Timer((int) TIME_OUT_WAIT,new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if(waitingForResponse){
 					response = JabriscaModel.WAIT_TIME_OUT+"@";
@@ -129,8 +135,10 @@ public abstract class VanillaSocketThread implements Runnable {
 		});
 		timeout.start();
 		while (waitingForResponse){
+			Thread.currentThread().sleep(TIME_OUT_WAIT/4);
 			out.println(message);
 		}
+		timeout.stop();
 		return response;
 	}
 	

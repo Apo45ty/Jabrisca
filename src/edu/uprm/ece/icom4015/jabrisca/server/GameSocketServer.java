@@ -9,7 +9,6 @@ import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameEvent;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameLawEnforcer;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameListener;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameRoom;
-import edu.uprm.ece.icom4015.jabrisca.server.game.brica.ItalianDeckCard;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.Player;
 
 public class GameSocketServer implements Runnable {
@@ -52,13 +51,13 @@ public class GameSocketServer implements Runnable {
 	public static final String DECK_OUT_OF_CARDS = "deckOutOfCards";
 	public static final String PLAYER_CANT_SURRENDER = "playerCantSurrender";
 	public static final String SHOW_PLAYERS_HAND = "playersHandIs";
-	public static final String ROOMNAMEKEY = "roomname=";
+	public static final String ROOMNAMEKEY = "roomName=";
 	public static final String BLACKHAND_KEY = "blackhand=";
 	public static final String SURRENDER_KEY = "surrender=";
 	public static final String LIFECARD_KEY = "lifecard=";
 	public static final String TIMED_KEY = "timedGame=";
-	public static final String TEAMS = "teams=";
-	public static final String CARD_SWAP = "cardswap=";
+	public static final String TEAMS = "teamGame=";
+	public static final String CARD_SWAP = "cardSwap=";
 	public static final String GET_PLAYERS_ONLINE = "getPlayersOnlineBitch";
 	public static final String GET_TOP_PLAYERS = "getTopPlayers";
 	public static final String GET_PLAYERS_HAND = "getHand";
@@ -82,6 +81,9 @@ public class GameSocketServer implements Runnable {
 	public static final String GET_GAME = "getGame";
 	public static final String COULD_LOAD_GAMES = "gamesLoaded";
 	public static final String GET_ALL_GAMES = "getAllGames";
+	public static final String GET_ALL_GAMES_SUCCESS = GET_ALL_GAMES
+			+ "-SUCCESS";
+	public static final String END_CONNECTION = ManagerSocketServer.END_CONNECTION;
 
 	/**
 	 * The constructor is an introvert and thus Here we add all the Game Law
@@ -93,6 +95,7 @@ public class GameSocketServer implements Runnable {
 			briscaGames[i] = BriscaGameRoom
 					.getInstance(MAX_NUMBER_OF_USERS_PER_GAME);
 			briscaGames[i].addGameLawEnforcer((GameLawEnforcer) briscaGames[i]);
+			briscaGames[i].setId(i);
 		}
 	}
 
@@ -140,6 +143,7 @@ public class GameSocketServer implements Runnable {
 	 * 
 	 */
 	public void run() {
+		Thread.currentThread().setName("GameSocketServer");
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(port);
@@ -165,7 +169,7 @@ public class GameSocketServer implements Runnable {
 
 	class GameSocketThread extends VanillaSocketThread implements GameListener {
 		private static final String GAMELISTENER_NAME = "gameListener";
-		
+
 		public GameRoom room;
 		private Player player;
 
@@ -188,6 +192,7 @@ public class GameSocketServer implements Runnable {
 						.split(",")[0]);
 				String password = ((parameters.split("password=")[1])
 						.split(",")[0]);
+				Thread.currentThread().setName("GameSocketClient" + username);
 				boolean userExists = false;
 				for (GameRoom room : briscaGames) {
 					if (room == null)
@@ -212,6 +217,8 @@ public class GameSocketServer implements Runnable {
 				} else {
 					out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 				}
+			} else if (pushedMessages.contains(END_CONNECTION)) {
+				done = true;
 			} else if (pushedMessages.contains(GameSocketServer.MOVE)) {
 				// TODO Make logic for game move
 				String parameters = pushedMessages.split("@")[1];
@@ -248,8 +255,9 @@ public class GameSocketServer implements Runnable {
 					.contains(GameSocketServer.IS_GAME_ROOM_FULL)) {
 				// TODO send the player his hand
 				boolean isGameRoomReady = !room.isBeenPlayed();
-				out.println(IS_GAME_ROOM_READY+"@roomready="+isGameRoomReady+ END_MESSAGE_DELIMETER);
-			} // TODO add the rest of the methods 
+				out.println(IS_GAME_ROOM_READY + "@roomready="
+						+ isGameRoomReady + END_MESSAGE_DELIMETER);
+			} // TODO add the rest of the methods
 		}
 
 		public void onGameStart(GameEvent e) {
@@ -296,5 +304,12 @@ public class GameSocketServer implements Runnable {
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * @return
+	 */
+	public static synchronized GameRoom[] getRooms() {
+		return briscaGames;
 	}
 }

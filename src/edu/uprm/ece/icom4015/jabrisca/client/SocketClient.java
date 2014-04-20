@@ -8,21 +8,22 @@ import edu.uprm.ece.icom4015.jabrisca.server.VanillaSocketThread;
 public class SocketClient extends VanillaSocketThread {
 	BlockingQueue instructionsToModel;
 	private String name;
-	
+
 	/**
 	 * 
 	 * @param hostURL
 	 * @param mainPort
 	 * @param instructions
 	 */
-	public SocketClient(String hostURL, int mainPort,BlockingQueue instructions,String name) {
+	public SocketClient(String hostURL, int mainPort,
+			BlockingQueue instructions, String name) {
 		this(hostURL, mainPort);
 		this.instructionsToModel = instructions;
-		//Start Thread
+		// Start Thread
 		new Thread(this).start();
-		this.name=name;
+		this.name = name;
 	}
-	
+
 	/**
 	 * @param hostURL
 	 * @param mainPort
@@ -30,19 +31,23 @@ public class SocketClient extends VanillaSocketThread {
 	private SocketClient(String hostURL, int mainPort) {
 		super(hostURL, mainPort);
 	}
-	
+
 	/**
 	 * Listen server push request
 	 */
 	@Override
 	public void main(String pushedMessages) {
 		try {
-			instructionsToModel.put(name+"-"+pushedMessages);
+			instructionsToModel.put(name + "-" + pushedMessages);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
+	public void dispose() {
+		done = true;
+		instructionsToModel = null;
+		
+	}
 
-	
 }
