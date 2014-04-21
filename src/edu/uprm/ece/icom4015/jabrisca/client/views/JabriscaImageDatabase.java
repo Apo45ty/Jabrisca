@@ -14,11 +14,12 @@ public class JabriscaImageDatabase implements ImageDatabase {
 			String iconName = "";
 			iconName = card.getSuit().toString();
 			iconName += "_" +(
-			card.getRank().getCardNumber()>=2 ||card.getRank().getCardNumber()<=7 ?card.getRank().getCardNumber() :
+			card.getRank().getCardNumber()>=2 &&card.getRank().getCardNumber()<=7 ?card.getRank().getCardNumber() :
 			card.getRank() == ItalianDeckRank.asso?"ace":
 			card.getRank() == ItalianDeckRank.fade?"jack":
 			card.getRank() == ItalianDeckRank.re?"king":
-			card.getRank() == ItalianDeckRank.fade?"knight":
+			card.getRank() == ItalianDeckRank.cavallo?"knight":
+			card.getRank() == ItalianDeckRank.tre?"3":
 				"ERROR");
 			iconName += ".png";
 			return new ImageIcon(getClass().getResource("/Images/Deck/"+iconName));

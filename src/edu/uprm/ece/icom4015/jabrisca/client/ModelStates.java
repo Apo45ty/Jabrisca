@@ -1,5 +1,7 @@
 package edu.uprm.ece.icom4015.jabrisca.client;
 
+import edu.uprm.ece.icom4015.jabrisca.server.game.brica.BriscaGameRoom;
+
 // / This model operates in two ways one is a state machine and below are
 // its states
 enum ModelStates {
@@ -32,7 +34,7 @@ enum ModelStates {
 			String[] stateParameters = { "username", "password", "roomName",
 					"teamGame", "blackhand", "cardswap", "surrender",
 					"timeLimit", "tournament", "playCardAnimationName",
-					"playCardAnimationParameters", "playerSeat",
+					"playCardAnimationParameters", BriscaGameRoom.SEAT_KEY.replace("=", ""),
 					"boardGame_myCard1", "boardGame_myCard2",
 					"boardGame_myCard3", "boardGame_player1Card",
 					"boardGame_player2Card", "boardGame_player3Card",
@@ -73,9 +75,12 @@ enum ModelStates {
 	public String toString() {
 		String parameters = ":";
 		parameters += getStateParametersValueKeyPair();
-		int stateNumber = Integer.parseInt(this.getClass().getTypeName()
-				.split("\\$ModelStates\\$")[1]);
-		return stateNumber + parameters;
+		String stateString = "";
+		try {
+			stateString = this.getClass().getTypeName()
+					.split("\\$ModelStates\\$")[1];
+		} catch (Exception e) {}
+		return stateString + parameters;
 	}
 
 	/**

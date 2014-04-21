@@ -303,21 +303,21 @@ public abstract class JabriscaJPanel extends JFrame {
 		Component comp = fetchComponent(null, name);
 		if (comp instanceof JTable) {
 			JTable table = (JTable) comp;
+			int count =0;
 			for (String game : result) {
-				for (int i = 0; i < table.getRowCount(); i++) {
-					for (int j = 0; j < table.getColumnCount(); j++) {
-						String cName = table.getColumnName(j);
-						String[] tempResults = result[i].replace("}", "").split(";"); 
-						//Search for value to place
-						for(int k=0;k<tempResults.length;k++){
-							if(tempResults[k].contains(cName)){
-								String value = tempResults[k].split(":")[1];
-								table.setValueAt(value, i, j);
-								break;
-							}
+				for (int j = 0; j < table.getColumnCount(); j++) {
+					String cName = table.getColumnName(j);
+					String[] tempResults = game.replace("}", "").split(";");
+					// Search for value to place
+					for (int k = 0; k < tempResults.length; k++) {
+						if (tempResults[k].contains(cName)) {
+							String value = tempResults[k].split(":")[1];
+							table.setValueAt(value, count, j);
+							break;
 						}
 					}
 				}
+				count++;
 			}
 			return true;
 		}
@@ -325,12 +325,11 @@ public abstract class JabriscaJPanel extends JFrame {
 	}
 
 	public boolean isCheckedIcon(String name) {
-		// TODO Auto-generated method stub
 		Component comp = fetchComponent(null, name);
 		if (comp instanceof JRadioButton) {
 			JRadioButton radioButt = (JRadioButton) comp;
 			return radioButt.isSelected();
 		}
 		return false;
-	} 
+	}
 }

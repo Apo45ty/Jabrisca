@@ -45,9 +45,10 @@ public class JabriscaModel implements Runnable {
 	public final int MAX_LEADER_RESULTS = MAX_PLAYERS_RESULTS;
 	private ImageDatabase imageDB = new JabriscaImageDatabase();
 	private String currentGameFetched = "";
+	private boolean guiIsBusy;
 	public static final String WAIT_TIME_OUT = "messageTimedOut";
 	public static final String LOG_FILTER = MANAGER_SOCKET;
-	private static final int MAX_GAMES_TO_LOAD = 10;
+	private static final int MAX_GAMES_TO_LOAD = 15;
 
 	public JabriscaModel(BlockingQueue instructions) {
 		this(null, null, null, null, null, instructions);
@@ -80,7 +81,9 @@ public class JabriscaModel implements Runnable {
 						e.printStackTrace();
 					}
 
-					if (logginEnabled && instructions.contains(LOG_FILTER)) {
+					if (logginEnabled
+							&& (LOG_FILTER == null || instruction
+									.contains(LOG_FILTER))) {
 						System.out.println("Status:\n" + state + "\n"
 								+ instruction);
 					}
@@ -180,7 +183,8 @@ public class JabriscaModel implements Runnable {
 										"Error Login out. Error:" + result);
 							}
 							transitionToState(ModelStates.loginsingup, null);
-						} else if (instruction.contains("games_table")) {
+						} else if (instruction
+								.contains("mouseClicked-games_table")) {
 							// TODO parse the message from the table
 							if (instruction.contains(":")) {
 								String parameters = instruction.split(":")[1];
@@ -190,23 +194,40 @@ public class JabriscaModel implements Runnable {
 										currentWindow,
 										"Are you sure you want to join\n"
 												+ parameters);
-								// System.out.println("Option=" + startGame
-								// + ",constant ="
-								// + JOptionPane.YES_OPTION);
 								// // Check if user wants to transition state
 								if (startGame == JOptionPane.YES_OPTION) {
-									String temp = sendMessageToSomeSocket(
+									currentWindow.setStatus("Joining room...");
+									String roomName = parameters
+											.split(GameSocketServer.ROOMNAMEKEY)[1]
+											.split(",")[0];
+									long oldtimeout = mainSocket.TIME_OUT_WAIT;
+									mainSocket.TIME_OUT_WAIT = oldtimeout * 2;
+									String temp0 = sendMessageToServer(
+											ManagerSocketServer.JOIN_GAME,
+											"," + GameSocketServer.ROOMNAMEKEY
+													+ roomName);
+									mainSocket.TIME_OUT_WAIT = oldtimeout;
+									String temp1 = sendMessageToSomeSocket(
 											GameSocketServer.LOGIN_USER, "",
 											gameSocket);
 
-									if (temp.contains(GameSocketServer.LOGIN_SUCCESS))
+									if (/*
+										 * temp0 .contains(GameSocketServer.
+										 * PLAYER_JOINED_ROOM) &&
+										 */temp1
+											.contains(GameSocketServer.LOGIN_SUCCESS))
 										transitionToState(
 												ModelStates.gameboard,
 												parametersKeyValuePair);
-									else
+									else {
 										JOptionPane.showMessageDialog(
-												currentWindow, "Join game!"
-														+ temp);
+												currentWindow,
+												"Cant join game!" + temp1
+														+ temp0);
+										currentWindow
+												.setStatus("Failed to join room "
+														+ roomName + ".");
+									}
 								} else {
 									// TODO user did not click yes
 								}
@@ -254,11 +275,13 @@ public class JabriscaModel implements Runnable {
 											+ state.getStateParameterValue("roomName"),
 									gameSocket);
 							if (result1
-									.contains(GameSocketServer.LOGIN_SUCCESS))
+									.contains(GameSocketServer.LOGIN_SUCCESS)
+									&& result2
+											.contains(GameSocketServer.GAME_CREATED))
 								transitionToState(ModelStates.gameboard, null);
 							else
 								JOptionPane.showMessageDialog(currentWindow,
-										"Cant load game!");
+										"Cant load game!" + result1 + result2);
 						} else if (instruction.contains("windowClosed")) {// windowClosed
 							transitionToState(ModelStates.lobby, null);
 						}
@@ -285,12 +308,14 @@ public class JabriscaModel implements Runnable {
 						} else if (instruction.contains(GAME_SOCKET)) {
 							if (instruction
 									.contains(GameSocketServer.SHOW_PLAYERS_HAND)) {
-								String hand = instruction.split("cards=")[1];
+								String hand = instruction.split("cards=")[1]
+										.split(GameSocketServer.END_MESSAGE_DELIMETER)[0]
+										.split(",")[0];
 								String[] cards = hand.split("/");
 								for (int i = 1; i <= 3; i++) {
 									String label = "boardGame_myCard" + i;
 									state.setStateParameterValue(label,
-											new ItalianDeckCard(cards[i]));
+											new ItalianDeckCard(cards[i - 1]));
 								}
 
 								for (int i = 1; i <= 3; i++) {
@@ -302,10 +327,92 @@ public class JabriscaModel implements Runnable {
 									if (image != null)
 										gameboard.setImageIcon(label, image);
 								}
-							}else if(instruction.contains(GameSocketServer.GAME_SCORE_IS)){
-								gameboard.fetchComponentAndAddValueJTextArea(null, "boardScore_display", instruction.split("score=")[1].split(",")[0], true);
-							} else if(instruction.contains(BriscaGameRoom.PLAYER_HAS_JOINED)){
-								gameboard.fetchComponentAndAddValueJTextArea(null, "boardScore_display", instruction.split("@")[1].split(",")[0], true);
+
+								String seat = ((instruction
+										.split(BriscaGameRoom.SEAT_KEY)[1])
+										.split(GameSocketServer.END_MESSAGE_DELIMETER)[0])
+										.split(",")[0];
+								state.setStateParameterValue(
+										BriscaGameRoom.SEAT_KEY
+												.replace("=", ""), seat);
+								String imageName = ((instruction
+										.split(GameSocketServer.LIFECARD_KEY)[1])
+										.split(GameSocketServer.END_MESSAGE_DELIMETER)[0])
+										.split(",")[0];
+								ImageIcon image = imageDB
+										.getImage(new ItalianDeckCard(imageName));
+								if (image != null)
+									gameboard.setImageIcon("boardGame_life",
+											image);
+							} else if (instruction
+									.contains(GameSocketServer.GAME_SCORE_IS)) {
+								gameboard.fetchComponentAndAddValueJTextArea(
+										null, "boardScore_display",
+										instruction.split("score=")[1]
+												.split(",")[0], false);
+							} else if (instruction
+									.contains(BriscaGameRoom.PLAYER_HAS_JOINED)) {
+								gameboard
+										.fetchComponentAndAddValueJTextArea(
+												null, "boardScore_display",
+												instruction.split("@")[1]
+														.split(",")[0], false);
+							} else if (instruction
+									.contains(GameSocketServer.MOVE_NEW_CARD)) {
+								// TODO add card to hand
+								String card = ((instruction
+										.split(GameSocketServer.MOVE_NEW_CARD)[1])
+										.split(GameSocketServer.END_MESSAGE_DELIMETER)[0])
+										.split(",")[0];
+								ItalianDeckCard italCard = new ItalianDeckCard(
+										card);
+								for (int i = 1; i <= 3; i++) {
+									String label = "boardGame_myCard" + i;
+									if (state.getStateParameterValue(label) == null) {
+										state.setStateParameterValue(label,
+												italCard);
+										ImageIcon image = imageDB
+												.getImage(italCard);
+										if (image != null)
+											gameboard
+													.setImageIcon(label, image);
+									}
+								}
+							} else if (instruction
+									.contains(GameSocketServer.MOVE_SUCCESSFUL)) {
+								// TODO Anther player has made a success full
+								// player move
+								String card = instruction
+										.split(GameSocketServer.MOVE_SUCCESSFUL)[1]
+										.split("@")[0];
+								ItalianDeckCard italCard = new ItalianDeckCard(
+										card);
+								String parameters = instruction.split("@")[1]
+										.split(GameSocketServer.END_MESSAGE_DELIMETER)[0];
+								String seat = parameters.split("seat=")[1]
+										.split(",")[0];
+								String turn = parameters.split("turn=")[1]
+										.split(",")[0];
+								String name = parameters.split("name=")[1]
+										.split(",")[0];
+								String destination = "boardGame_player"
+										+ (seat) + "Card";
+								state.setStateParameterValue(destination,
+										italCard);
+								// Could animate
+								ImageIcon image = imageDB.getImage(italCard);
+								if (image != null)
+									gameboard.setImageIcon(destination, image);
+							} else if (instruction
+									.contains(GameSocketServer.TURN_IS_OVER)) {
+								// TODO clean up stack
+								for (int i = 1; i <= 4; i++) {
+									String label = "boardGame_player" + i
+											+ "Card";
+									state.setStateParameterValue(label, null);
+									gameboard.setImageIcon(label, null);
+
+								}
 							}
 						} else if (instruction.equals("options_surrender")) {
 							// TODO Tell the server user has surrendered
@@ -378,36 +485,58 @@ public class JabriscaModel implements Runnable {
 							// Then Animate the board if possible
 							// sendMessageToSomeSocket(GameSocketServer.PLAYER_PLAYED_CARD,
 							// instruction.spli("mouseClicked-boardGame_myCard")[0],gameSocket);
-							if (gameboard instanceof AnimatedJabriscaJPanel) {
-								String animationName = (String) state
-										.getStateParameterValue("playCardAnimationName");
-								String animationParameters = (String) state
-										.getStateParameterValue("playCardAnimationParameters");
-								if (animationName == null) {
-									animationName = "MoveCardAnimation";
-								}
-								if (animationParameters != null) {
-									animationName += ":" + animationParameters;
-								}
-
-								AnimatedJabriscaJPanel boardanimator = (AnimatedJabriscaJPanel) gameboard;
-								// remove extras string and get the name of the
-								// card
+							String result = sendMessageToSomeSocket(
+									GameSocketServer.MOVE_CARD,
+									",move="
+											+ GameSocketServer.MOVE_CARD
+											+ state.getStateParameterValue(instruction
+													.split("mouseClicked-")[1]),
+									gameSocket);
+							if (result
+									.contains(GameSocketServer.MOVE_SUCCESSFUL)) {
 								String target = instruction
 										.split("mouseClicked-")[1];
-								// get the seat assigned to the player by server
+								// get the seat assigned to the player by
+								// server
 								String seatString = (String) state
-										.getStateParameterValue("playerSeat");
+										.getStateParameterValue(BriscaGameRoom.SEAT_KEY
+												.replace("=", ""));
 								if (seatString == null) {
 									seatString = "0";
 								}
 								int playerSeat = Integer.parseInt(seatString);
 								String destination = "boardGame_player"
-										+ (playerSeat + 1) + "Card";
+										+ (playerSeat) + "Card";
+								// Remove the card from the state variables
+								state.setStateParameterValue(target, null);
+								/*
+								 * Animate the action
+								 */
+								if (gameboard instanceof AnimatedJabriscaJPanel) {
+									String animationName = (String) state
+											.getStateParameterValue("playCardAnimationName");
+									String animationParameters = (String) state
+											.getStateParameterValue("playCardAnimationParameters");
+									if (animationName == null) {
+										animationName = "MoveCardAnimation";
+									}
+									if (animationParameters != null) {
+										animationName += ":"
+												+ animationParameters;
+									}
 
-								boardanimator.animateAsync(animationName,
-										target, destination);
+									AnimatedJabriscaJPanel boardanimator = (AnimatedJabriscaJPanel) gameboard;
+									// remove extras string and get the name of
+									// the
+									// card fix to sync
+									boardanimator.animateAsync(animationName,
+											target, destination);
+								}
+							} else {
+								JOptionPane.showMessageDialog(currentWindow,
+										result);
 							}
+
 						} else if (instruction.contains(CHAT_SOCKET)) {
 							if (instruction.contains(ChatSocketServer.MESSAGE)) {
 								String parameters = instruction.split("@")[1];
@@ -489,7 +618,7 @@ public class JabriscaModel implements Runnable {
 				} catch (Exception e) {
 					String output = "Unexpected minor error, gracefully dealing with it in "
 							+ getClass().getSimpleName()
-							+ ".Error: "
+							+ ".  Error: "
 							+ e.getClass().getSimpleName();
 					System.out.println(output);
 					JOptionPane.showMessageDialog(currentWindow, output);

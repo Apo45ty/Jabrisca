@@ -92,4 +92,9 @@ public class TournamentBrisca implements Game {
 		return 0;
 	}
 
+	public String drawCard(Player player, int seat) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

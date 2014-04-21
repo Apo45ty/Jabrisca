@@ -3,6 +3,7 @@
  */
 package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,7 +16,7 @@ import edu.uprm.ece.icom4015.jabrisca.server.ManagerSocketServer;
  * 
  */
 public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
-	private int id=0;
+	private int id = 0;
 	private static final int MAX_NUMBER_OF_THREADS = 3;
 	private Player[] players = new Player[GameSocketServer.MAX_NUMBER_OF_USERS_PER_GAME];
 	private final int MAX_NUMBER_OF_ENFORCERS = 1;
@@ -39,6 +40,7 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	public static final String A_GAME_HAS_STARTED = "-" + "gameStarted";
 	public static final String PLAYER_HAS_JOINED = "playerJoined";
 	public static final String NUMBER_OF_PLAYERS_KEY = "numeroplayers=";
+	public static final String SEAT_KEY = "playerSeat=";
 
 	private BriscaGameRoom(int roomSize) {
 		this.players = new Player[roomSize];
@@ -89,7 +91,7 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 					e.printStackTrace();
 				}
 			}
-			// Start game after the initial parameters are set
+			// Start game after the initial parameters are set by showing hand
 			playersHaveNotConnected = true;
 			while (playersHaveNotConnected) {
 				for (Player player : players) {
@@ -105,14 +107,45 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 
 			// Tell everyone the game started
 			gameStartEvent(new GameEvent(game));
+			for (Player player : players) {
+				// TODO send the users the results of the turn
+				player.getUser()
+						.getGameSocket()
+						.sendMessage(
+								getHand(player)
+										+ ","
+										+ BriscaGameRoom.SEAT_KEY
+										+ player.getSeatNumber()
+										+ ","
+										+ GameSocketServer.LIFECARD_KEY
+										+ game.getParameter(GameSocketServer.LIFECARD_KEY)
+										+ GameSocketServer.END_MESSAGE_DELIMETER);
+			}
 
 			// Wait for game to end
 			while (!game.isOver()) {
 				if (game.isRoundOver()) {
+					game.endRound();
 					for (Player player : players) {
 						// TODO send the users the results of the turn
-						player.getUser().getGameSocket()
-								.sendMessage(GameSocketServer.TURN_IS_OVER);
+						player.getUser()
+								.getGameSocket()
+								.sendMessage(
+										GameSocketServer.TURN_IS_OVER
+												+ GameSocketServer.END_MESSAGE_DELIMETER);
+						player.getUser()
+								.getGameSocket()
+								.sendMessage(
+										game.drawCard(player,
+												player.getSeatNumber())
+												+ GameSocketServer.END_MESSAGE_DELIMETER);
+						
+						//TODO show all player scores
+						player.getUser()
+						.getGameSocket()
+						.sendMessage(
+								GameSocketServer.GAME_SCORE_IS
+										+"@score="+player.getScore()+ GameSocketServer.END_MESSAGE_DELIMETER);
 					}
 				}
 				try {
@@ -132,6 +165,13 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 					game = null;
 				}
 			} else {
+				GameResults result = GameResults.getInstance(game.getCreateTime(), new Date(), game.getParameters());
+				result.setWinner(game.getWinner().getSeatNumber());
+				for(Player player:players){
+					player.getUser().addPastGame(result);
+					player.getUser().addScore(Long.parseLong(player.getScore()+""));
+					result.seatPlayer(player, player.getSeatNumber());
+				}
 				gameOverEvent(new GameEvent(game));
 				cleanUp();
 				game = null;
@@ -221,12 +261,13 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 		String message = game.play(player, parameters);
 		broadcast(message + "@seat=" + player.getSeatNumber() + ",name="
 				+ player.getUser().getUsername()
-				+ ManagerSocketServer.END_MESSAGE_DELIMETER, player);
+				+",turn="+game.getCurrentPlayersSeat()+ ManagerSocketServer.END_MESSAGE_DELIMETER, player);
 		return message;
 	}
 
 	/**
-	 * Send the message to the rest of the players
+	 * Send the message to the rest of the players, does not call users that
+	 * have not registered their game socket;
 	 * 
 	 * @param message
 	 * @param player
@@ -237,7 +278,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 				continue;
 			if (player == client)
 				continue;
-			client.getUser().getGameSocket().sendMessage(message);
+			if (client.getUser().getGameSocket() != null)
+				client.getUser().getGameSocket().sendMessage(message);
 		}
 	}
 
@@ -422,7 +464,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 		String tResult = game.getParameters();
 		if (tResult != null)
 			result = (result + tResult);
-		return result.replace("=", ":").replace(",", ";") + "} ";
+		return (result + ",Players=" + playerCount + "/4").replace("=", ":")
+				.replace(",", ";") + "} ";
 	}
 
 	/**
@@ -433,7 +476,8 @@ public class BriscaGameRoom implements GameRoom, GameLawEnforcer {
 	}
 
 	/**
-	 * @param id the id to set
+	 * @param id
+	 *            the id to set
 	 */
 	public synchronized void setId(int id) {
 		this.id = id;

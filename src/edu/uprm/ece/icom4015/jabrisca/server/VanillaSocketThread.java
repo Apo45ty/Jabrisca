@@ -21,7 +21,7 @@ public abstract class VanillaSocketThread implements Runnable {
 	private boolean waitingForResponse = false;
 	private String response = "";
 	private Timer timeout;
-	public static final long TIME_OUT_WAIT = 2000;
+	public static long TIME_OUT_WAIT = 2000L;
 	public static final String CLOSING_SOCKET = "socketIsClosing";
 	
 	/**

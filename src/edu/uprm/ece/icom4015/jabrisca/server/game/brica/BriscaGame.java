@@ -2,6 +2,7 @@ package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
 import java.util.Date;
 
+import edu.uprm.ece.icom4015.jabrisca.server.BriscaGameFactory;
 import edu.uprm.ece.icom4015.jabrisca.server.GameSocketServer;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.ItalianDeckCard.ItalianDeckRank;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.ItalianDeckCard.ItalianDeckSuit;
@@ -12,7 +13,8 @@ public class BriscaGame implements Game {
 	public static final int ITALIAN_DECK_SIZE = 40;
 	private static final int MAX_NUMBER_OF_ROUNDS = 10;
 	public ItalianDeckCard[] deck = new ItalianDeckCard[ITALIAN_DECK_SIZE];
-	private Date createTime;
+	private Date createTime ;
+	public boolean tournament = false;
 	private boolean blackhand = false;
 	private boolean surrender = false;
 	private boolean teams = false;
@@ -33,7 +35,7 @@ public class BriscaGame implements Game {
 	private boolean isRoundOver = false;
 	private boolean isGameOver = false;
 	private int numberOfRounds = 0;
-
+	private Player winner;
 	public void startNewGame() {
 		// Create Deck
 		createTime = new Date();
@@ -149,25 +151,7 @@ public class BriscaGame implements Game {
 			}
 
 		if (move.contains(GameSocketServer.MOVE_DRAW_CARD)) {
-			boolean needsCard = false;
-			int i = 0;
-			for (i = 0; i < playerHands[seatNumber - 1].length; i++) {
-				if (playerHands[seatNumber - 1][i] == null) {// makeMove-drawingCard@move=makeMove-drawingCard
-					needsCard = true;
-					break;
-				}
-			}
-			if (needsCard) {
-				ItalianDeckCard card = drawCard();
-				if (card != null) {
-					result = GameSocketServer.MOVE_NEW_CARD + card;
-					playerHands[seatNumber - 1][i] = card;
-				} else
-					result = GameSocketServer.DECK_OUT_OF_CARDS;
-			} else {
-				// TODO tell player he cant draw
-				result = GameSocketServer.CANT_DRAW_CARDS;
-			}
+			result = drawCard(player, seatNumber);
 		}
 
 		if (move.contains(GameSocketServer.MOVE_CARD))
@@ -190,7 +174,8 @@ public class BriscaGame implements Game {
 					}
 					if (cardInPlayersHand) {
 						currentStack[cardsPlayedInRound++] = italCard;
-						result = GameSocketServer.MOVE_SUCCESSFUL;
+						result = GameSocketServer.MOVE_SUCCESSFUL
+								+ italCard.toString();
 						if ((currentTurn + 1) == currentPlayers)
 							isRoundOver = true;
 						currentTurn = ((currentTurn + 1) % 4);
@@ -198,48 +183,40 @@ public class BriscaGame implements Game {
 						result = GameSocketServer.PLAYER_DOES_NOT_POSSES_CARD;
 					}
 				}
-				if (isRoundOver) {
-					int winnersInd = 0;
-					numberOfRounds++;
-					cardsPlayedInRound = 0;
-					ItalianDeckCard winnersCard = currentStack[winnersInd];
-					int score = 0;
-					for (int i = 0; i < currentStack.length; i++) {
-						int comp = BriscaCardComparator.compare(winnersCard,
-								currentStack[i], this.life.getSuit());
-						if (comp > 0) {
-							winnersCard = currentStack[i];
-							winnersInd = i;
-						} else if (comp == 0) {
-							// TODO get players turns
-						}
-						score += currentStack[i].getRank().getValue();
-					}
-					int count = 0;
-					for (ItalianDeckCard card : playerStacks[winnersInd]) {
-						if (card == null)
-							break;
-						count++;
-					}
-
-					for (ItalianDeckCard card : currentStack)
-						playerStacks[winnersInd][count++] = card;
-					players[winnersInd].addScore(score);
-					// TODO END ROUND
-
-					// Set the player turns for next round to the right of the
-					// winner
-					for (int i = 0; i < turns.length; i++) {
-						int value = (i + winnersInd) % 4 + 1;
-						turns[i] = value;
-					}
-					isRoundOver = false;
-					if(numberOfRounds==MAX_NUMBER_OF_ROUNDS){
-						isGameOver = true;
-					}
-				}
 			}
 		//
+		return result;
+	}
+
+	/**
+	 * Compleately different behavior than draw card
+	 * 
+	 * @param player
+	 * @param parameters
+	 * @param seatNumber
+	 * @return
+	 */
+	public String drawCard(Player player, int seatNumber) {
+		String result = GameSocketServer.MOVE_NOT_FOUND;
+		boolean needsCard = false;
+		int i = 0;
+		for (i = 0; i < playerHands[seatNumber - 1].length; i++) {
+			if (playerHands[seatNumber - 1][i] == null) {// makeMove-drawingCard@move=makeMove-drawingCard
+				needsCard = true;
+				break;
+			}
+		}
+		if (needsCard) {
+			ItalianDeckCard card = drawCard();
+			if (card != null) {
+				result = GameSocketServer.MOVE_NEW_CARD + card;
+				playerHands[seatNumber - 1][i] = card;
+			} else
+				result = GameSocketServer.DECK_OUT_OF_CARDS;
+		} else {
+			// TODO tell player he cant draw
+			result = GameSocketServer.CANT_DRAW_CARDS;
+		}
 		return result;
 	}
 
@@ -304,7 +281,8 @@ public class BriscaGame implements Game {
 				+ GameSocketServer.BLACKHAND_KEY + blackhand + ","
 				+ GameSocketServer.CARD_SWAP + cardswap + ","
 				+ GameSocketServer.TEAMS + teams + ","
-				+ GameSocketServer.SURRENDER_KEY + surrender;
+				+ GameSocketServer.SURRENDER_KEY + surrender + ","
+				+ BriscaGameFactory.TOURNAMENT_GAME + "=" + tournament;
 	}
 
 	/**
@@ -326,6 +304,10 @@ public class BriscaGame implements Game {
 			return teams;
 		if (key.contains(GameSocketServer.CARD_SWAP))
 			return cardswap;
+		if (key.contains(BriscaGameFactory.TOURNAMENT_GAME))
+			return tournament;
+		if (key.contains(GameSocketServer.LIFECARD_KEY))
+			return life;
 		return null;
 	}
 
@@ -361,6 +343,74 @@ public class BriscaGame implements Game {
 
 	public int getCurrentRound() {
 		return numberOfRounds;
+	}
+
+	public void endRound() {
+		int winnersInd = 0;
+		numberOfRounds++;
+		cardsPlayedInRound = 0;
+		ItalianDeckCard winnersCard = currentStack[winnersInd];
+		int score = 0;
+		for (int i = 0; i < currentStack.length; i++) {
+			int comp = BriscaCardComparator.compare(winnersCard,
+					currentStack[i], this.life.getSuit());
+			if (comp > 0) {
+				winnersCard = currentStack[i];
+				winnersInd = i;
+			} else if (comp == 0) {
+				// TODO get players turns
+			}
+			score += currentStack[i].getRank().getValue();
+		}
+		int count = 0;
+		for (ItalianDeckCard card : playerStacks[winnersInd]) {
+			if (card == null)
+				break;
+			count++;
+		}
+
+		for (ItalianDeckCard card : currentStack)
+			playerStacks[winnersInd][count++] = card;
+		players[winnersInd].addScore(score);
+		// TODO END ROUND
+
+		// Set the player turns for next round to the right of the
+		// winner
+		for (int i = 0; i < turns.length; i++) {
+			int value = (i + winnersInd) % 4 + 1;
+			turns[i] = value;
+		}
+		isRoundOver = false;
+		if (numberOfRounds == MAX_NUMBER_OF_ROUNDS) {
+			isGameOver = true;
+			//TODO get winner
+		}
+	}
+
+	/**
+	 * @return the tournament
+	 */
+	public synchronized boolean isTournament() {
+		return tournament;
+	}
+
+	/**
+	 * @param tournament the tournament to set
+	 */
+	public synchronized void setTournament(boolean tournament) {
+		this.tournament = tournament;
+	}
+
+	/**
+	 * @return the createTime
+	 */
+	public synchronized Date getCreateTime() {
+		return createTime;
+	}
+
+	public Player getWinner() {
+		// TODO Auto-generated method stub
+		return winner;
 	}
 
 }

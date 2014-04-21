@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.JLabel;
 import javax.swing.Timer;
 
 import edu.uprm.ece.icom4015.jabrisca.client.JabriscaController;
@@ -424,6 +425,8 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 	public boolean animate(String animation, String target, String destination) {
 		return myAnimator.animate(animation, target, destination);
 	}
+	
+	
 
 	/**
 	 * Asynchronous animation
@@ -556,7 +559,10 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 										// card
 										// is near the desired point
 		boolean animating = false; // variable that checks if an animation is
-									// ocuring
+
+		private Point target_startPoint;//start of animation
+
+		// ocuring
 
 		public MoveCardAnimation() {
 		}
@@ -598,6 +604,8 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 
 		public void animateAsync() {
 			animating = true;
+			target_startPoint = target_component.getLocation();
+			//Do fancy stuff like rotation and even movement to location
 			timmer = new Timer(tStep, new ActionListener() {
 
 				public void actionPerformed(ActionEvent arg0) {
@@ -624,6 +632,10 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 					}
 					if ((Math.abs(dX) <= destinationXOffset && Math.abs(dY) <= destinationYOffset)) {
 						timmer.stop();
+						JLabel label = (JLabel) destination.pointMarker;
+						label.setIcon(((JLabel) target_component).getIcon());
+						target_component.setLocation(target_startPoint);
+						((JLabel)target_component).setIcon(null);
 						animating = false;
 					}
 				}
@@ -684,4 +696,5 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 		}
 
 	}
+
 }

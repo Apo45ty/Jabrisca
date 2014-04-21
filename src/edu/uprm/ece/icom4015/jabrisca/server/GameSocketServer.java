@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import edu.uprm.ece.icom4015.jabrisca.server.ChatSocketServer.ChatSocketThread;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.BriscaGameRoom;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameEvent;
 import edu.uprm.ece.icom4015.jabrisca.server.game.brica.GameLawEnforcer;
@@ -55,7 +56,7 @@ public class GameSocketServer implements Runnable {
 	public static final String BLACKHAND_KEY = "blackhand=";
 	public static final String SURRENDER_KEY = "surrender=";
 	public static final String LIFECARD_KEY = "lifecard=";
-	public static final String TIMED_KEY = "timedGame=";
+	public static final String TIMED_KEY = "timeLimit=";
 	public static final String TEAMS = "teamGame=";
 	public static final String CARD_SWAP = "cardSwap=";
 	public static final String GET_PLAYERS_ONLINE = "getPlayersOnlineBitch";
@@ -84,6 +85,8 @@ public class GameSocketServer implements Runnable {
 	public static final String GET_ALL_GAMES_SUCCESS = GET_ALL_GAMES
 			+ "-SUCCESS";
 	public static final String END_CONNECTION = ManagerSocketServer.END_CONNECTION;
+	public static final String GET_STACK_FAILED = GET_STACK + "-Failure";
+	public static final String GAME_CREATED = "gameCreatedSuccessfuly";
 
 	/**
 	 * The constructor is an introvert and thus Here we add all the Game Law
@@ -194,26 +197,31 @@ public class GameSocketServer implements Runnable {
 						.split(",")[0]);
 				Thread.currentThread().setName("GameSocketClient" + username);
 				boolean userExists = false;
-				for (GameRoom room : briscaGames) {
-					if (room == null)
-						continue;
-					for (Player player : room.getPlayers()) {
-						if (player == null)
+				for (GameRoom room : briscaGames)
+					games: {
+						if (room == null)
 							continue;
-						User user = player.getUser();
-						if (user.getUsername().equals(username)
-								&& user.getPassword().equals(password)) {
-							userExists = true;
-							user.setGameSocket(this);
-							this.player = player;
-							this.room = room;
-							// this.lawEnforcer = (GameLawEnforcer)room;
-							break;
+						for (Player player : room.getPlayers()) {
+							if (player == null)
+								continue;
+							User user = player.getUser();
+							if (user.getUsername().equals(username)
+									&& user.getPassword().equals(password)) {
+								userExists = true;
+								this.player = player;
+								this.room = room;
+								// this.lawEnforcer = (GameLawEnforcer)room;
+								break games;
+							}
 						}
 					}
-				}
 				if (userExists) {
 					out.println(LOGIN_SUCCESS + END_MESSAGE_DELIMETER);
+					player.getUser().setGameSocket(this);
+					// TODO setup chat
+					if (player.getUser().getChatSocket() != null)
+						((ChatSocketThread) (player.getUser().getChatSocket())).room = ChatSocketServer.rooms[room
+								.getId()];
 				} else {
 					out.println(LOGIN_FAIL + END_MESSAGE_DELIMETER);
 				}
@@ -226,10 +234,13 @@ public class GameSocketServer implements Runnable {
 						+ END_MESSAGE_DELIMETER);
 			} else if (pushedMessages.contains(GameSocketServer.GET_STACK)) {
 				// TODO Make logic for game move
+				out.println(GET_STACK_FAILED + END_MESSAGE_DELIMETER);
 			} else if (pushedMessages
 					.contains(GameSocketServer.GET_PLAYERS_HAND)) {
 				// TODO send the player his hand
-				out.println(room.getHand(player) + END_MESSAGE_DELIMETER);
+				out.println(room.getHand(player) + ","
+						+ BriscaGameRoom.SEAT_KEY + player.getSeatNumber()
+						+ END_MESSAGE_DELIMETER);
 			} else if (pushedMessages
 					.contains(GameSocketServer.GET_GAME_PARAMETERS)) {
 				// TODO send the player his hand
@@ -283,7 +294,7 @@ public class GameSocketServer implements Runnable {
 			if (!room.isBeenPlayed()) {
 				String roomname = ((rules.split(GameSocketServer.ROOMNAMEKEY)[1])
 						.split(",")[0]);
-				// roomname = ManagerSocketServer.sanitizeWord(roomname);
+				roomname = ManagerSocketServer.sanitizeWord(roomname);
 				room.setName(roomname);
 				room.setParameters(rules);
 				room.addPlayer(Player.getInstance(0, user));
@@ -294,12 +305,25 @@ public class GameSocketServer implements Runnable {
 	}
 
 	/**
+	 * Does not add duplicates that is does not allow for duplicate users in the
+	 * same room
+	 * 
 	 * @return -1 if can't add user
 	 */
 	public static synchronized int addUser(String roomName, User user) {
 		for (GameRoom room : briscaGames) {
 			// if(room==null)continue;
 			if (room.getName().equals(roomName)) {
+				for (Player player : room.getPlayers()) {
+					if (player == null)
+						continue;
+					if (player.getUser().getUsername()
+							.equals(user.getUsername())) {
+						player.setUser(user); // Just in case the user has
+												// signed out
+						return player.getSeatNumber();
+					}
+				}
 				return room.addPlayer(Player.getInstance(0, user));
 			}
 		}

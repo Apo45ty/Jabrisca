@@ -28,6 +28,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 	public static ChatSocketServer chatServer;
 	private String[] badWords = { "cabron", "pendejo", "popo", "puta", "cago",
 			"jodienda", "joder" };
+	private static final boolean debug =true;
 	public static BlockingDeque bannedWords = new LinkedBlockingDeque();
 	public static int currentUsers = 0;
 	// Verbs
@@ -115,6 +116,18 @@ public class ManagerSocketServer extends VanillaSocketServer {
 		chatServer.start(chatSocketServerPort);
 		gameServer = GameSocketServer.getServerSingleton();
 		gameServer.start(gameSocketServerPort);
+		if (debug) {
+			User amir = User.getInstance("Amir", "securepassword", 0);
+			String keyvalues = GameSocketServer.ROOMNAMEKEY + "Game01,"
+					+ GameSocketServer.BLACKHAND_KEY + "true,"
+					+ GameSocketServer.SURRENDER_KEY + "true,"
+					+ GameSocketServer.TEAMS + "true,"
+					+ GameSocketServer.CARD_SWAP + "true,"
+					+ GameSocketServer.TIMED_KEY + "false";
+			gameServer.createGame(keyvalues, amir);
+			gameServer.addUser("Game01", User.getInstance("Maria", "lol", 0));
+			gameServer.addUser("Game01", User.getInstance("Juan", "lol", 0));
+		}
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(managerSocketServerPort);
@@ -232,11 +245,11 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				// TODO do something special: verify game can be created,
 				// switch the user to the proper chat room, create game ...
 				String parameters = pushedMessages.split("@")[1];
-				out.println(GameSocketServer.createGame(parameters, user));
+				out.println(GameSocketServer.GAME_CREATED + "@"
+						+ GameSocketServer.ROOMNAMEKEY
+						+ GameSocketServer.createGame(parameters, user)
+						+ END_MESSAGE_DELIMETER);
 				clearingBuffer = true;
-				// TODO setup chat
-				((ChatSocketThread) (user.getChatSocket())).room = ChatSocketServer.rooms[((GameSocketThread) (user
-						.getGameSocket())).room.getId()];
 				timeout2 = new Timer(1500, new ActionListener() {
 					public void actionPerformed(ActionEvent arg0) {
 						clearingBuffer = false;
@@ -248,7 +261,7 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				// TODO do something special: verify game can be Joined,
 				// switch the user to the proper chat room, create game ...
 				String parameters = pushedMessages.split("@")[1];
-				String roomName = ((parameters.split("roomname=")[1])
+				String roomName = ((parameters.split("roomName=")[1])
 						.split(",")[0]);
 				int result = GameSocketServer.addUser(roomName, user);
 				if (result >= 0) {
@@ -257,6 +270,14 @@ public class ManagerSocketServer extends VanillaSocketServer {
 				} else {
 					out.println(GameSocketServer.PLAYER_CANT_JOINED_ROOM);
 				}
+				clearingBuffer = true;
+				timeout2 = new Timer(1500, new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						clearingBuffer = false;
+						timeout2.stop();
+					}
+				});
+				timeout2.start();
 			} else if (pushedMessages.contains(GameSocketServer.GET_ALL_GAMES)) {
 				String result = "";
 				int num = Integer.parseInt(((pushedMessages.split("load=")[1])

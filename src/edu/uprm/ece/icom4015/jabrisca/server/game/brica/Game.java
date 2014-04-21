@@ -1,5 +1,7 @@
 package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
+import java.util.Date;
+
 public interface Game {
 	void startNewGame();
 	boolean initialParametersSet();
@@ -20,4 +22,8 @@ public interface Game {
 	int getNumberOfTeams();
 	int gameTeamScore(int i);
 	int getCurrentRound();
+	String drawCard(Player player,int seat);
+	void endRound();
+	Date getCreateTime();
+	Player getWinner();
 }

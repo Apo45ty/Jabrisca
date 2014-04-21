@@ -20,7 +20,9 @@ public class SocketClient extends VanillaSocketThread {
 		this(hostURL, mainPort);
 		this.instructionsToModel = instructions;
 		// Start Thread
-		new Thread(this).start();
+		Thread a =new Thread(this);
+		a.start();
+		a.setName(name+"_Client");
 		this.name = name;
 	}
 

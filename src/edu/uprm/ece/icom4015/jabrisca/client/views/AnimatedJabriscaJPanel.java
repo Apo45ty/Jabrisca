@@ -47,4 +47,5 @@ public interface AnimatedJabriscaJPanel {
 	 * @return
 	 */
 	boolean hasDestination(String target);
+
 }
