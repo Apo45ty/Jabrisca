@@ -372,11 +372,11 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 		}
 		// TODO fix the animations
 		// "MoveCardAnimation","boardGame_myCard1","boardGame_player1Card"
-		board.animateAsync("MoveCardAnimation", "boardGame_myCard1",
+		board.animate("MoveCardAnimation", "boardGame_myCard1",
 				"boardGame_player1Card");
-		board.animateAsync("MoveCardAnimation", "boardGame_myCard2",
+		board.animate("MoveCardAnimation", "boardGame_myCard2",
 				"boardGame_player2Card");
-		board.animateAsync("MoveCardAnimation", "boardGame_myCard3",
+		board.animate("MoveCardAnimation", "boardGame_myCard3",
 				"boardGame_player3Card");
 	}
 
@@ -597,17 +597,38 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 
 		public boolean animate() {
 			animateAsync();
-			while (animating)
-				;
+			while (isAnimating()){
+			}
 			return true;
 		}
-
+		
+		/**
+		 * Get if is animating
+		 * @return
+		 */
+		private synchronized boolean isAnimating(){
+			return animating;
+		}
+		
+		/**
+		 * Set animating
+		 * @param value
+		 */
+		private synchronized void setAnimating(boolean value){
+			this.animating = value;
+		}
+		
+		/**
+		 * 
+		 */
 		public void animateAsync() {
-			animating = true;
+			setAnimating(true);
 			target_startPoint = target_component.getLocation();
 			//Do fancy stuff like rotation and even movement to location
-			timmer = new Timer(tStep, new ActionListener() {
-
+			
+			timmer = new Timer(tStep,null);
+			timmer.addActionListener(new ActionListener() {
+				Timer timer = timmer;
 				public void actionPerformed(ActionEvent arg0) {
 					int currX = target_component.getLocation().x;
 					int currY = target_component.getLocation().y;
@@ -615,7 +636,7 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 					int destY = destination.pointMarker.getLocation().y;
 					int dX = destX - currX;
 					int dY = destY - currY;
-
+					
 					if (Math.abs(dX) > destinationXOffset
 							|| Math.abs(dY) > destinationYOffset) {
 						// TODO move card
@@ -630,13 +651,16 @@ public class GameBoard extends JabriscaJPanel implements AnimatedJabriscaJPanel 
 								* xStep, currY + dirrectionY * yStep);
 						getContentPane().repaint();
 					}
+					
 					if ((Math.abs(dX) <= destinationXOffset && Math.abs(dY) <= destinationYOffset)) {
-						timmer.stop();
+						timer.stop();
 						JLabel label = (JLabel) destination.pointMarker;
 						label.setIcon(((JLabel) target_component).getIcon());
 						target_component.setLocation(target_startPoint);
 						((JLabel)target_component).setIcon(null);
-						animating = false;
+						setAnimating(false);
+						timer.removeActionListener(this);
+						timer = null;
 					}
 				}
 			});

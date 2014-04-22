@@ -348,13 +348,13 @@ public class JabriscaModel implements Runnable {
 									.contains(GameSocketServer.GAME_SCORE_IS)) {
 								gameboard.fetchComponentAndAddValueJTextArea(
 										null, "boardScore_display",
-										instruction.split("score=")[1]
+										instruction.split("\nscore=")[1]
 												.split(",")[0], false);
 							} else if (instruction
 									.contains(BriscaGameRoom.PLAYER_HAS_JOINED)) {
 								gameboard
 										.fetchComponentAndAddValueJTextArea(
-												null, "boardScore_display",
+												null, "boardScore_display","\n"+
 												instruction.split("@")[1]
 														.split(",")[0], false);
 							} else if (instruction
@@ -529,7 +529,7 @@ public class JabriscaModel implements Runnable {
 									// remove extras string and get the name of
 									// the
 									// card fix to sync
-									boardanimator.animateAsync(animationName,
+									boardanimator.animate(animationName,
 											target, destination);
 								}
 							} else {

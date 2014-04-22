@@ -1,5 +1,7 @@
 package edu.uprm.ece.icom4015.jabrisca.server.game.brica;
 
+import java.util.Date;
+
 public class TournamentBrisca implements Game {
 	BriscaGame game;
 
@@ -93,6 +95,21 @@ public class TournamentBrisca implements Game {
 	}
 
 	public String drawCard(Player player, int seat) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void endRound() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public Date getCreateTime() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Player getWinner() {
 		// TODO Auto-generated method stub
 		return null;
 	}
