@@ -1,0 +1,103 @@
+package edu.uprm.ece.icom4015.jabrisca.test.unit;
+
+import edu.uprm.ece.icom4015.jabrisca.server.ChatRoom;
+import edu.uprm.ece.icom4015.jabrisca.server.User;
+import org.junit.jupiter.api.Test;
+
+public class ChatRoomTest {
+    @Test
+    public void test_addUser_HappyPathAddLessThanCapacityToNewChatroom(){
+        //Prepare
+        ChatRoom room = ChatRoom.getInstance(4);
+        User user = User.getInstance("user","password",10);
+
+        //Execute
+        room.addUser(user);
+
+        //Test
+        User[] users = room.getUsers();
+        int nonNulls = countNonNull(users);
+        assert(nonNulls == 1);
+        assert(users[0] == user);
+    }
+    @Test
+    public void test_addUser_HappyPathAddAtCapacityToNewChatroom(){
+        //Prepare
+        ChatRoom room = ChatRoom.getInstance(1);
+        User user = User.getInstance("user","password",10);
+
+        //Execute
+        room.addUser(user);
+
+        //Test
+        User[] users = room.getUsers();
+        int nonNulls = countNonNull(users);
+        assert(nonNulls == 1);
+        assert(users[0] == user);
+    }
+    @Test
+    public void test_addUser_HappyPathAddAtCapacityToNewChatroomThree(){
+        //Prepare
+        ChatRoom room = ChatRoom.getInstance(4);
+
+        //Execute
+        for(int i=0;i<3;i++){
+            User user = User.getInstance("user","password",10);
+            room.addUser(user);
+
+            User[] users = room.getUsers();
+            assert(users[i] == user);
+            int nonNulls = countNonNull(users);
+            assert(nonNulls == i+1);
+        }
+
+
+        //Test
+        User[] users = room.getUsers();
+        int nonNulls = countNonNull(users);
+        assert(nonNulls == 3);
+    }
+    @Test
+    public void test_addUser_HappyPathAddOverCapacityToNewChatroom(){
+        //Prepare
+        ChatRoom room = ChatRoom.getInstance(1);
+        User user = User.getInstance("user","password",10);
+        User user2 = User.getInstance("user2","password",10);
+
+        //Execute
+        boolean addOne = room.addUser(user);
+        boolean addTwo = room.addUser(user2);
+
+        //Test
+        User[] users = room.getUsers();
+        int nonNulls = countNonNull(users);
+        assert(nonNulls == 1);
+        assert(users[0] == user);
+        assert (addOne);
+        assert (!addTwo);
+    }
+    @Test
+    public void test_removeUser_HappyPathSuccessfulRemove(){
+        //Prepare
+        ChatRoom room = ChatRoom.getInstance(1);
+        User user = User.getInstance("user","password",10);
+
+        //Execute
+        room.addUser(user);
+        room.removeUser(user);
+
+        //Test
+        User[] users = room.getUsers();
+        int nonNulls = countNonNull(users);
+        assert(nonNulls == 0);
+        assert(users[0] == null);
+    }
+    public static <T> int countNonNull(T[] array) {
+        int result = 0;
+        for(T element: array){
+            if(element!=null)
+                result++;
+        }
+        return result;
+    }
+}

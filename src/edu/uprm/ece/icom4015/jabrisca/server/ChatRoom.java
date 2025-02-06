@@ -54,4 +54,7 @@ public class ChatRoom {
 		}
 		return false;
 	}
+	public User[] getUsers() {
+		return users;
+	}
 }
