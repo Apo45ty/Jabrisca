@@ -4,7 +4,7 @@ import edu.uprm.ece.icom4015.jabrisca.server.game.brica.BriscaGameRoom;
 
 // / This model operates in two ways one is a state machine and below are
 // its states
-enum ModelStates {
+public enum ModelStates {
 	loginsingup() {
 		@Override
 		void setStateParametersValues() {

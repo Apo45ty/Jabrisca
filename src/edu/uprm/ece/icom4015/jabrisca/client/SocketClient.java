@@ -49,7 +49,13 @@ public class SocketClient extends VanillaSocketThread {
 	public void dispose() {
 		done = true;
 		instructionsToModel = null;
-		
 	}
 
+	public BlockingQueue getInstructionsToModel() {
+		return instructionsToModel;
+	}
+
+	public void setInstructionsToModel(BlockingQueue instructionsToModel) {
+		this.instructionsToModel = instructionsToModel;
+	}
 }
