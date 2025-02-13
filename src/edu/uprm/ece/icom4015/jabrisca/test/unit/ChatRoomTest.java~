@@ -36,7 +36,7 @@ public class ChatRoomTest {
         assert(users[0] == user);
     }
     @Test
-    public void test_addUser_HappyPathAddAtCapacityToNewChatroomFour(){
+    public void test_addUser_HappyPathAddAtCapacityToNewChatroomThree(){
         //Prepare
         ChatRoom room = ChatRoom.getInstance(4);
 

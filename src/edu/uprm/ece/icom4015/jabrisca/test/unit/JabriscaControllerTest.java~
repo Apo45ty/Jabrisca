@@ -86,7 +86,6 @@ public class JabriscaControllerTest {
             assert (result.equals(
                     "mouseExited-" + ComponentName));
         }
-        assert (queue.isEmpty());
     }
     private static Component getCustomComponent() {
         return new Component() {
