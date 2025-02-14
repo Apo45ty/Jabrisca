@@ -162,9 +162,9 @@ public class ManagerSocketServer extends VanillaSocketServer {
 
 		@Override
 		public void main(String pushedMessages) {
+			System.out.println(pushedMessages);
 			if(pushedMessages==null)
 				return;
-			System.out.println(pushedMessages);
 			if (pushedMessages.contains(SIGNUP_USER)) {
 				// TODO check if username is registed already
 				String parameters = pushedMessages.split("@")[1];

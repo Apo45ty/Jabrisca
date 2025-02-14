@@ -64,7 +64,6 @@ public abstract class VanillaSocketThread implements Runnable {
 	public void run() {
 		try {
 			Thread.currentThread().setName("VanillaSocketThread");
-			out.println("{\"MAINPORT\":"+socket.getPort()+"}");
 			while (!done) {
 				String input = "";
 				input = in.readLine();
